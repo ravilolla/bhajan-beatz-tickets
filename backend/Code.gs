@@ -412,6 +412,21 @@ function qrBlob_(text) {
   return null;
 }
 
+/** Event logo for emails, fetched once from the public site and cached for 6 hours. */
+function logoBlob_() {
+  if (!SETTINGS.PUBLIC_SITE_URL) return null;
+  try {
+    var cache = CacheService.getScriptCache(), b64 = cache.get('logo_b64');
+    if (!b64) {
+      var res = UrlFetchApp.fetch(SETTINGS.PUBLIC_SITE_URL + 'logo.jpg', { muteHttpExceptions: true });
+      if (res.getResponseCode() !== 200) return null;
+      b64 = Utilities.base64Encode(res.getContent());
+      if (b64.length < 95000) cache.put('logo_b64', b64, 21600);
+    }
+    return Utilities.newBlob(Utilities.base64Decode(b64), 'image/jpeg', 'logo.jpg');
+  } catch (err) { Logger.log('Logo fetch failed: ' + err); return null; }
+}
+
 function sendTicketEmail_(r) {
   var url = ticketUrl_(r.id), confirmed = r.status === 'Confirmed', pending = r.status === PENDING;
   var subject = confirmed ? 'Your entry ticket: ' + SETTINGS.EVENT_NAME + ' (' + r.id + ')'
@@ -419,10 +434,12 @@ function sendTicketEmail_(r) {
                         : 'You are on the waitlist: ' + SETTINGS.EVENT_NAME;
   var owed = Math.max(0, r.due - r.paid);
   var qr = confirmed ? qrBlob_(url) : null;
+  var logo = logoBlob_();
   var esc = function (s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
   var html =
     '<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;border-radius:14px;overflow:hidden;border:1px solid #e5d4f5">' +
-    '<div style="background:#2a0b45;color:#ffd98a;padding:20px 24px"><div style="font-size:13px;letter-spacing:2px;color:#ff8bd8">BHAJAN BEATZ</div>' +
+    '<div style="background:#2a0b45;color:#ffd98a;padding:20px 24px">' +
+    (logo ? '<img src="cid:logo" alt="Bhajan Beatz" style="display:block;width:100%;max-width:472px;border-radius:10px;margin:0 0 12px">' : '<div style="font-size:13px;letter-spacing:2px;color:#ff8bd8">BHAJAN BEATZ</div>') +
     '<div style="font-size:20px;font-weight:bold;color:#fff">Bhajan Jamming &amp; Clubbing</div>' +
     '<div style="margin-top:6px">' + esc(SETTINGS.EVENT_WHEN) + '<br>' + esc(SETTINGS.EVENT_WHERE) + '</div></div>' +
     '<div style="padding:22px 24px;color:#222">' +
@@ -445,7 +462,9 @@ function sendTicketEmail_(r) {
     '<p style="color:#666;font-size:13px">Can\'t make it? Just reply to this email so we can give your seat to someone else.</p>' +
     '<p style="color:#666;font-size:13px">' + esc(SETTINGS.PRESENTED_BY) + '<br><i>Music is the soul\'s language, and God is the soul\'s energy.</i></p></div></div>';
   var opts = { htmlBody: html, name: 'Bhajan Beatz · Sai Sannidhi' };
-  if (qr) opts.inlineImages = { qr: qr };
+  opts.inlineImages = {};
+  if (qr) opts.inlineImages.qr = qr;
+  if (logo) opts.inlineImages.logo = logo;
   if (SETTINGS.ORGANIZER_EMAIL) opts.replyTo = SETTINGS.ORGANIZER_EMAIL;
   MailApp.sendEmail(r.email, subject, (pending ? 'Please pay ' + money_(owed) + ' by Zelle to ' + SETTINGS.ZELLE_TO + ' (memo ' + r.id + ') or cash. ' : '') + 'Ticket: ' + url, opts);
 }

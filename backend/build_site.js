@@ -93,6 +93,7 @@ fs.writeFileSync(path.join(out, 'check.html'), `<!DOCTYPE html><html><head><meta
 </script></body></html>
 `);
 fs.writeFileSync(path.join(out, '.nojekyll'), '');
+if (fs.existsSync(path.join(dir, 'logo.jpg'))) fs.copyFileSync(path.join(dir, 'logo.jpg'), path.join(out, 'logo.jpg'));
 
 const pages = { Register: ['index.html', 'Register'], Ticket: ['ticket.html', 'Your ticket'],
                 Door: ['door.html', 'Door check-in'], Report: ['report.html', 'Report'] };

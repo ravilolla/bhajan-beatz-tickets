@@ -6,6 +6,7 @@
   .wrap { max-width:520px; margin:0 auto; padding:24px 16px 48px; }
   .brand { text-align:center; margin-bottom:18px; }
   .brand .k { color:var(--pink); letter-spacing:4px; font-size:13px; font-weight:700; }
+  .brand .logo { display:block; width:100%; max-width:480px; margin:0 auto 12px; border-radius:14px; box-shadow:0 0 24px rgba(200,90,255,.35); }
   .brand h1 { margin:4px 0 6px; font-size:26px; line-height:1.2; }
   .brand .when { color:var(--gold); font-weight:600; }
   .brand .where { color:var(--muted); font-size:14px; }
@@ -31,5 +32,5 @@
   .pill.bad { background:rgba(255,93,108,.18); color:var(--bad); }
   .center { text-align:center; }
   a { color:var(--gold); }
-  @media print { body { background:#fff; color:#000; } .card { box-shadow:none; border-color:#ccc; background:#fff; } .noprint { display:none !important; } .brand .k,.brand .when { color:#000; } }
+  @media print { body { background:#fff; color:#000; } .card { box-shadow:none; border-color:#ccc; background:#fff; } .noprint { display:none !important; } .brand .logo { box-shadow:none; max-width:360px; } .brand .k,.brand .when { color:#000; } }
 </style>

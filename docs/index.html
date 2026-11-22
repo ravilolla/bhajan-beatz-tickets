@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Bhajan Beatz · Register</title><link rel="stylesheet" href="style.css?v=mwrgidk5"><script src="config.js?v=mwrgidk5"></script><script src="api.js?v=mwrgidk5"></script></head>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Bhajan Beatz · Register</title><link rel="stylesheet" href="style.css?v=mwrgtjuk"><script src="config.js?v=mwrgtjuk"></script><script src="api.js?v=mwrgtjuk"></script></head>
 <body><div class="wrap">
   <div class="brand">
     <img class="logo" src="https://ravilolla.github.io/bhajan-beatz-tickets/banner.jpg" alt="Bhajan Beatz · Bhajan Jamming &amp; Clubbing · First time in Danbury!">
@@ -30,6 +30,16 @@
     <p id="doneText" style="color:var(--muted)"></p>
     <div id="payBox" style="display:none;text-align:left;background:#1d0833;border-radius:12px;padding:14px;margin-top:8px"></div>
     <a id="ticketLink" href="#"><button type="button">View my ticket</button></a>
+    <button type="button" class="secondary" id="again">Buy more tickets</button>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <details id="lost"><summary style="cursor:pointer;color:var(--gold)">Already registered? Resend my tickets</summary>
+      <label for="lostEmail">Email you registered with</label>
+      <input id="lostEmail" type="email" autocomplete="email" maxlength="120">
+      <button type="button" class="secondary" id="lostGo">Email my tickets again</button>
+      <div class="msg" id="lostMsg"></div>
+    </details>
   </div>
 
   <p class="fine">Presented by Sai Sannidhi, in collaboration with Sur Shakti Group<br><i>Music is the soul's language, and God is the soul's energy.</i></p>
@@ -67,15 +77,14 @@
       var t = res.ticket, ok = t.status === 'Confirmed', pend = t.status === 'Pending payment';
       $('formCard').style.display = 'none'; $('doneCard').style.display = 'block';
       $('doneStatus').innerHTML = ok ? '<span class="pill ok">Confirmed</span>' : pend ? '<span class="pill warn">Seats held · payment needed</span>' : '<span class="pill warn">Waitlist</span>';
-      $('doneTitle').textContent = res.duplicate ? 'You were already registered' : (ok ? 'You\'re in, ' + t.name + '!' : pend ? 'Almost there, ' + t.name + '!' : 'You\'re on the waitlist');
-      $('doneText').textContent = res.duplicate ? 'We emailed your details again. Party of ' + t.party + '.'
-        : ok ? 'Your ticket for a party of ' + t.party + ' has been emailed to you. Show its QR code at the door.'
+      $('doneTitle').textContent = (ok ? 'You\'re in, ' + t.name + '!' : pend ? 'Almost there, ' + t.name + '!' : 'You\'re on the waitlist');
+      $('doneText').textContent = ok ? 'Your ticket for a party of ' + t.party + ' has been emailed to you. Show its QR code at the door.'
         : pend ? 'We\'re holding ' + t.party + (t.party > 1 ? ' seats' : ' seat') + '. Your QR ticket is emailed once we receive payment.'
              : 'The event is full. We\'ll email you if a seat opens up.';
       if (pend) payBox(t);
       $('ticketLink').href = APP + '?t=' + encodeURIComponent(t.id);
       if (!ok && !pend) $('ticketLink').style.display = 'none';
-      if (pend) $('ticketLink').firstChild.textContent = 'View payment details';
+      $('ticketLink').firstChild.textContent = pend ? 'View payment details' : 'View my ticket';
     }).withFailureHandler(function (err) {
       $('go').disabled = false; $('go').textContent = LABEL;
       showMsg((err && err.message ? err.message : String(err)).replace(/^Error:\s*/, ''), 'err');
@@ -90,5 +99,16 @@
     line('Cash:', t.pay.cash + ' Mention ' + t.id + '.');
     line('Pay within:', t.pay.days + ' days');
   }
+  $('again').onclick = function () {
+    $('doneCard').style.display = 'none'; $('formCard').style.display = 'block';
+    $('go').disabled = false; $('go').textContent = LABEL; $('msg').className = 'msg'; $('payBox').style.display = 'none';
+    $('ticketLink').style.display = ''; sel.value = '1'; showTotal(); loadSeats(); window.scrollTo(0, 0);
+  };
+  $('lostGo').onclick = function () {
+    var b = $('lostGo'), m = $('lostMsg'); b.disabled = true; m.className = 'msg';
+    google.script.run.withSuccessHandler(function (r) { m.className = 'msg info'; m.textContent = r.message; })
+      .withFailureHandler(function (e) { b.disabled = false; m.className = 'msg err'; m.textContent = String(e.message || e).replace(/^Error:\s*/, ''); })
+      .resendTickets($('lostEmail').value);
+  };
 </script>
 </body></html>

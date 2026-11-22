@@ -143,7 +143,7 @@ function api_(fnName, args) {
   // Only these functions can be called from the site.
   var API = { getAvailability: getAvailability, register: register, getTicket: getTicket, verifyPin: verifyPin,
               checkIn: checkIn, doorStats: doorStats, doorSearch: doorSearch, reportData: reportData,
-              markPaid: markPaid, pendingList: pendingList };
+              markPaid: markPaid, pendingList: pendingList, resendTickets: resendTickets };
   API.apiVersion = function () { return API_VERSION; };
   try {
     if (!Object.prototype.hasOwnProperty.call(API, fnName)) throw new Error('Unknown request.');
@@ -176,13 +176,7 @@ function register(form) {
   lock.waitLock(20000);
   try {
     var sh = sheet_(), rows = rows_();
-    for (var i = 0; i < rows.length; i++) {
-      if (String(rows[i][COL.email]).toLowerCase() === email && rows[i][COL.status] !== 'Cancelled') {
-        var r = rowObj_(rows[i]);
-        sendTicketEmail_(r); // resend instead of double-booking
-        return { duplicate: true, ticket: publicTicket_(r) };
-      }
-    }
+    // Every registration is its own order with its own ticket ID, even from the same email or phone.
     var left = SETTINGS.CAPACITY - seatsUsed_(rows);
     var status = party <= left ? (paidEvent_() ? PENDING : 'Confirmed') : 'Waitlist';
     var id = newId_(rows);
@@ -194,6 +188,20 @@ function register(form) {
     sendTicketEmail_(rec);
     return { duplicate: false, ticket: publicTicket_(rec), seatsLeft: Math.max(0, left - (status === 'Waitlist' ? 0 : party)) };
   } finally { lock.releaseLock(); }
+}
+
+/** "Lost my ticket": re-sends every active registration for this email, only to that same email.
+ *  Same answer whether or not the email is registered, and at most once per 10 minutes per email. */
+function resendTickets(email) {
+  email = clean_(email, 120).toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Please enter a valid email address.');
+  var cache = CacheService.getScriptCache(), key = 'resend_' + Utilities.base64EncodeWebSafe(email).slice(0, 200);
+  if (!cache.get(key)) {
+    cache.put(key, '1', 600);
+    rows_().map(rowObj_).filter(function (r) { return r.email.toLowerCase() === email && r.status !== 'Cancelled'; })
+      .slice(0, 10).forEach(sendTicketEmail_);
+  }
+  return { message: 'If that email has registrations, we\'ve sent them again. Please check your inbox and spam folder.' };
 }
 
 /** Public ticket lookup: only what the attendee needs to see. */

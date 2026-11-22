@@ -143,7 +143,7 @@ function api_(fnName, args) {
   // Only these functions can be called from the site.
   var API = { getAvailability: getAvailability, register: register, getTicket: getTicket, verifyPin: verifyPin,
               checkIn: checkIn, doorStats: doorStats, doorSearch: doorSearch, reportData: reportData,
-              markPaid: markPaid, pendingList: pendingList, resendTickets: resendTickets };
+              markPaid: markPaid, pendingList: pendingList, resendTickets: resendTickets, getEventInfo: getEventInfo };
   API.apiVersion = function () { return API_VERSION; };
   try {
     if (!Object.prototype.hasOwnProperty.call(API, fnName)) throw new Error('Unknown request.');
@@ -158,7 +158,7 @@ function getAvailability() {
   var rows = rows_();
   var used = seatsUsed_(rows);
   return { capacity: SETTINGS.CAPACITY, used: used, left: Math.max(0, SETTINGS.CAPACITY - used),
-           open: SETTINGS.REGISTRATION_OPEN, maxParty: SETTINGS.MAX_PARTY, pay: payInfo_() };
+           open: SETTINGS.REGISTRATION_OPEN, maxParty: SETTINGS.MAX_PARTY, pay: payInfo_(), event: eventInfo_() };
 }
 
 function register(form) {
@@ -189,6 +189,14 @@ function register(form) {
     return { duplicate: false, ticket: publicTicket_(rec), seatsLeft: Math.max(0, left - (status === 'Waitlist' ? 0 : party)) };
   } finally { lock.releaseLock(); }
 }
+
+/** Event text the site shows, so changing SETTINGS + redeploying updates the site without a rebuild. */
+function eventInfo_() {
+  return { when: SETTINGS.EVENT_WHEN, where: SETTINGS.EVENT_WHERE, presentedBy: SETTINGS.PRESENTED_BY,
+           price: paidEvent_() ? Number(SETTINGS.PRICE_PER_PERSON) : 0, maxParty: SETTINGS.MAX_PARTY,
+           priceLabel: paidEvent_() ? money_(SETTINGS.PRICE_PER_PERSON) + ' per person (Zelle or cash)' : 'Free entry' };
+}
+function getEventInfo() { return eventInfo_(); }
 
 /** "Lost my ticket": re-sends every active registration for this email, only to that same email.
  *  Same answer whether or not the email is registered, and at most once per 10 minutes per email. */

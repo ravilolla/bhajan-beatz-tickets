@@ -5,8 +5,8 @@
   <div class="brand">
     <img class="logo" src="<?= S.PUBLIC_SITE_URL ?>banner.jpg" alt="Bhajan Beatz · Bhajan Jamming &amp; Clubbing · First time in Danbury!">
     <div class="k">ENTRY TICKET</div>
-    <div class="when"><?= S.EVENT_WHEN ?></div>
-    <div class="where"><?= S.EVENT_WHERE ?></div>
+    <div class="when" id="evWhen"><?= S.EVENT_WHEN ?></div>
+    <div class="where" id="evWhere"><?= S.EVENT_WHERE ?></div>
   </div>
   <div class="card center" id="card"><p>Loading ticket…</p></div>
 
@@ -90,5 +90,6 @@
     }).checkIn(TID, getPin(), $('cnt').value);
   }
   $('checkBtn').onclick = checkInNow;
+  google.script.run.withSuccessHandler(function (ev) { $('evWhen').textContent = ev.when; $('evWhere').textContent = ev.where; }).getEventInfo();
 </script>
 </body></html>

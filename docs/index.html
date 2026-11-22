@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Bhajan Beatz · Register</title><link rel="stylesheet" href="style.css?v=mwrgtjuk"><script src="config.js?v=mwrgtjuk"></script><script src="api.js?v=mwrgtjuk"></script></head>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Bhajan Beatz · Register</title><link rel="stylesheet" href="style.css?v=mwrhouvy"><script src="config.js?v=mwrhouvy"></script><script src="api.js?v=mwrhouvy"></script></head>
 <body><div class="wrap">
   <div class="brand">
     <img class="logo" src="https://ravilolla.github.io/bhajan-beatz-tickets/banner.jpg" alt="Bhajan Beatz · Bhajan Jamming &amp; Clubbing · First time in Danbury!">
-    <div class="when">Sunday, December 27, 2026 · 4 PM – 8 PM, followed by dinner</div>
-    <div class="where">Sai Sannidhi, Danbury, CT · $50 per person (Zelle or cash) · Registration required</div>
+    <div class="when" id="evWhen">Sunday, December 27, 2026 · 4 PM – 8 PM, followed by dinner</div>
+    <div class="where"><span id="evWhere">Sai Sannidhi, Danbury, CT</span> · <span id="evPrice">$50 per person (Zelle or cash)</span> · Registration required</div>
   </div>
 
   <div class="card" id="formCard">
@@ -42,7 +42,7 @@
     </details>
   </div>
 
-  <p class="fine">Presented by Sai Sannidhi, in collaboration with Sur Shakti Group<br><i>Music is the soul's language, and God is the soul's energy.</i></p>
+  <p class="fine"><span id="evBy">Presented by Sai Sannidhi, in collaboration with Sur Shakti Group</span><br><i>Music is the soul's language, and God is the soul's energy.</i></p>
 </div>
 <script>
   var APP = (location.href.replace(/[^\/]*([?#].*)?$/, '') + 'ticket.html'), MAXP = 5, PRICE = 50, LABEL = PRICE > 0 ? 'Reserve my seats' : 'Get my free ticket';
@@ -55,6 +55,7 @@
 
   function loadSeats() {
     google.script.run.withSuccessHandler(function (a) {
+      if (a.event) applyEvent(a.event);
       var pct = Math.min(100, Math.round(a.used / a.capacity * 100));
       $('barFill').style.width = pct + '%';
       $('seats').firstChild.nodeValue = !a.open ? 'Registration is closed.' :
@@ -110,5 +111,20 @@
       .withFailureHandler(function (e) { b.disabled = false; m.className = 'msg err'; m.textContent = String(e.message || e).replace(/^Error:\s*/, ''); })
       .resendTickets($('lostEmail').value);
   };
+  // Live event details from the backend (price, date, venue), so Code.gs changes show without rebuilding the site.
+  function applyEvent(ev) {
+    $('evWhen').textContent = ev.when; $('evWhere').textContent = ev.where; $('evPrice').textContent = ev.priceLabel; $('evBy').textContent = ev.presentedBy;
+    var keep = +sel.value || 1;
+    if (ev.maxParty !== MAXP) {
+      MAXP = ev.maxParty; sel.innerHTML = '';
+      for (var i = 1; i <= MAXP; i++) { var o = document.createElement('option'); o.value = i; o.textContent = i === 1 ? '1 (just me)' : i; sel.appendChild(o); }
+      sel.value = Math.min(keep, MAXP);
+    }
+    if (ev.price !== PRICE) {
+      PRICE = ev.price; LABEL = PRICE > 0 ? 'Reserve my seats' : 'Get my free ticket';
+      if (!$('go').disabled) $('go').textContent = LABEL;
+      $('total').style.display = 'none'; showTotal();
+    }
+  }
 </script>
 </body></html>

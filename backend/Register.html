@@ -3,8 +3,8 @@
 <body><div class="wrap">
   <div class="brand">
     <img class="logo" src="<?= S.PUBLIC_SITE_URL ?>banner.jpg" alt="Bhajan Beatz · Bhajan Jamming &amp; Clubbing · First time in Danbury!">
-    <div class="when"><?= S.EVENT_WHEN ?></div>
-    <div class="where"><?= S.EVENT_WHERE ?> · <?= priceLabel ?> · Registration required</div>
+    <div class="when" id="evWhen"><?= S.EVENT_WHEN ?></div>
+    <div class="where"><span id="evWhere"><?= S.EVENT_WHERE ?></span> · <span id="evPrice"><?= priceLabel ?></span> · Registration required</div>
   </div>
 
   <div class="card" id="formCard">
@@ -42,7 +42,7 @@
     </details>
   </div>
 
-  <p class="fine"><?= S.PRESENTED_BY ?><br><i>Music is the soul's language, and God is the soul's energy.</i></p>
+  <p class="fine"><span id="evBy"><?= S.PRESENTED_BY ?></span><br><i>Music is the soul's language, and God is the soul's energy.</i></p>
 </div>
 <script>
   var APP = <?= appUrl ?>, MAXP = <?= S.MAX_PARTY ?>, PRICE = <?= S.PRICE_PER_PERSON ?>, LABEL = PRICE > 0 ? 'Reserve my seats' : 'Get my free ticket';
@@ -55,6 +55,7 @@
 
   function loadSeats() {
     google.script.run.withSuccessHandler(function (a) {
+      if (a.event) applyEvent(a.event);
       var pct = Math.min(100, Math.round(a.used / a.capacity * 100));
       $('barFill').style.width = pct + '%';
       $('seats').firstChild.nodeValue = !a.open ? 'Registration is closed.' :
@@ -110,5 +111,20 @@
       .withFailureHandler(function (e) { b.disabled = false; m.className = 'msg err'; m.textContent = String(e.message || e).replace(/^Error:\s*/, ''); })
       .resendTickets($('lostEmail').value);
   };
+  // Live event details from the backend (price, date, venue), so Code.gs changes show without rebuilding the site.
+  function applyEvent(ev) {
+    $('evWhen').textContent = ev.when; $('evWhere').textContent = ev.where; $('evPrice').textContent = ev.priceLabel; $('evBy').textContent = ev.presentedBy;
+    var keep = +sel.value || 1;
+    if (ev.maxParty !== MAXP) {
+      MAXP = ev.maxParty; sel.innerHTML = '';
+      for (var i = 1; i <= MAXP; i++) { var o = document.createElement('option'); o.value = i; o.textContent = i === 1 ? '1 (just me)' : i; sel.appendChild(o); }
+      sel.value = Math.min(keep, MAXP);
+    }
+    if (ev.price !== PRICE) {
+      PRICE = ev.price; LABEL = PRICE > 0 ? 'Reserve my seats' : 'Get my free ticket';
+      if (!$('go').disabled) $('go').textContent = LABEL;
+      $('total').style.display = 'none'; showTotal();
+    }
+  }
 </script>
 </body></html>

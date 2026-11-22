@@ -35,6 +35,7 @@ var SETTINGS = {
   PRICE_PER_PERSON: 50,  // only used when PRICE_TIERS is empty
   ZELLE_TO: 'FILL IN: Zelle email or phone',
   ZELLE_NAME: 'FILL IN: name the Zelle account shows',
+  PAYPAL_ME: '',         // optional: your PayPal.me name, e.g. 'SaiSannidhi' for paypal.me/SaiSannidhi ('' hides PayPal)
   CASH_INFO: 'Cash can be handed to an organizer at Sai Sannidhi.',
   PAY_WITHIN_DAYS: 3,    // shown to people; unpaid holds are NOT released automatically
   REFUND_POLICY: 'FILL IN: e.g. Full refund if you cancel by December 20.',
@@ -82,8 +83,12 @@ function money_(n) { return '$' + (Math.round(Number(n) * 100) / 100).toFixed(2)
 /** Payment details shown on the page and in emails. */
 function payInfo_() {
   return { price: seatPrice_(seatsUsed_(rows_()) + 1), zelleTo: SETTINGS.ZELLE_TO, zelleName: SETTINGS.ZELLE_NAME,
-           cash: SETTINGS.CASH_INFO, days: SETTINGS.PAY_WITHIN_DAYS, refund: SETTINGS.REFUND_POLICY };
+           cash: SETTINGS.CASH_INFO, days: SETTINGS.PAY_WITHIN_DAYS, refund: SETTINGS.REFUND_POLICY,
+           paypal: paypalHandle_() };
 }
+function paypalHandle_() { return String(SETTINGS.PAYPAL_ME || '').replace(/^.*paypal\.me\//i, '').replace(/[^\w-]/g, ''); }
+/** PayPal.me link that opens PayPal with the amount filled in (the payer adds the ticket ID as the note). */
+function paypalLink_(amount) { var h = paypalHandle_(); return h ? 'https://paypal.me/' + h + '/' + Number(amount).toFixed(2) + 'USD' : ''; }
 
 // ---------- One-time setup helpers (run from the Apps Script editor) ----------
 function setup() {
@@ -302,7 +307,7 @@ function doorSearch(pin, q) {
  *  `amount` defaults to the full amount due. A waitlisted party is confirmed only if seats are free. */
 function markPaid(id, pin, via, amount) {
   if (!pinOk_(pin)) throw new Error('Wrong door PIN.');
-  via = /cash/i.test(via) ? 'Cash' : 'Zelle';
+  via = /cash/i.test(via) ? 'Cash' : /paypal/i.test(via) ? 'PayPal' : 'Zelle';
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     var r = find_(id);
@@ -514,6 +519,8 @@ function sendTicketEmail_(r) {
         '<div style="background:#f7f0fc;border-radius:10px;padding:14px 16px">' +
         '<p style="margin:0 0 8px"><b>Zelle:</b> send to <b>' + esc(SETTINGS.ZELLE_TO) + '</b> (' + esc(SETTINGS.ZELLE_NAME) + ')<br>' +
         'Put <b>' + esc(r.id) + '</b> in the Zelle memo so we can match your payment.</p>' +
+        (paypalHandle_() ? '<p style="margin:0 0 8px"><b>PayPal:</b> <a href="' + paypalLink_(owed) + '">pay ' + money_(owed) + ' at paypal.me/' + esc(paypalHandle_()) + '</a><br>' +
+          'Add <b>' + esc(r.id) + '</b> in the PayPal note.</p>' : '') +
         '<p style="margin:0"><b>Cash:</b> ' + esc(SETTINGS.CASH_INFO) + ' Mention ticket ID <b>' + esc(r.id) + '</b>.</p></div>' +
         '<p>Once we receive your payment, we will email your QR entry ticket.</p>' +
         (SETTINGS.REFUND_POLICY ? '<p style="color:#666;font-size:13px">' + esc(SETTINGS.REFUND_POLICY) + '</p>' : '')
@@ -525,7 +532,7 @@ function sendTicketEmail_(r) {
   if (qr) opts.inlineImages.qr = qr;
   if (logo) opts.inlineImages.logo = logo;
   if (SETTINGS.ORGANIZER_EMAIL) opts.replyTo = SETTINGS.ORGANIZER_EMAIL;
-  MailApp.sendEmail(r.email, subject, (pending ? 'Please pay ' + money_(owed) + ' by Zelle to ' + SETTINGS.ZELLE_TO + ' (memo ' + r.id + ') or cash. ' : '') + 'Ticket: ' + url, opts);
+  MailApp.sendEmail(r.email, subject, (pending ? 'Please pay ' + money_(owed) + ' by Zelle to ' + SETTINGS.ZELLE_TO + ' (memo ' + r.id + ')' + (paypalHandle_() ? ', PayPal ' + paypalLink_(owed) + ' (note ' + r.id + ')' : '') + ' or cash. ' : '') + 'Ticket: ' + url, opts);
 }
 
 /** Organizer helper: after changing a row's Status to Confirmed (e.g. promoting from waitlist), select
@@ -545,10 +552,12 @@ function markSelectedRowPaid_(via) {
 }
 function markSelectedPaidZelle() { markSelectedRowPaid_('Zelle'); }
 function markSelectedPaidCash() { markSelectedRowPaid_('Cash'); }
+function markSelectedPaidPayPal() { markSelectedRowPaid_('PayPal'); }
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('Bhajan Beatz')
     .addItem('Mark selected row PAID (Zelle) + email ticket', 'markSelectedPaidZelle')
     .addItem('Mark selected row PAID (Cash) + email ticket', 'markSelectedPaidCash')
+    .addItem('Mark selected row PAID (PayPal) + email ticket', 'markSelectedPaidPayPal')
     .addSeparator()
     .addItem('Re-send email to selected row', 'resendTicketForSelectedRow').addToUi();
 }

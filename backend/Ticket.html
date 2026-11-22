@@ -36,8 +36,13 @@
     $('nm').textContent = t.name; $('pty').textContent = 'Admits ' + t.party + (t.party > 1 ? ' people' : ' person');
     if (t.status === 'Pending payment') {
       $('tid').textContent = t.id;
-      [['Amount due:', '$' + t.owed], ['Zelle:', t.pay.zelleTo + ' (' + t.pay.zelleName + ')'], ['Zelle memo:', t.id], ['Cash:', t.pay.cash], ['Pay within:', t.pay.days + ' days of registering']].forEach(function (x) {
-        var p = document.createElement('p'); p.style.margin = '0 0 8px'; var b = document.createElement('b'); b.textContent = x[0] + ' '; p.appendChild(b); p.appendChild(document.createTextNode(x[1])); $('pay').appendChild(p);
+      [['Amount due:', '$' + t.owed], ['Zelle:', t.pay.zelleTo + ' (' + t.pay.zelleName + ')'], ['Zelle memo:', t.id]].concat(t.pay.paypal ? [['PayPal:', 'link']] : []).concat([['Cash:', t.pay.cash], ['Pay within:', t.pay.days + ' days of registering']]).forEach(function (x) {
+        var p = document.createElement('p'); p.style.margin = '0 0 8px'; var b = document.createElement('b'); b.textContent = x[0] + ' '; p.appendChild(b);
+        if (x[1] === 'link') {
+          var a = document.createElement('a'); a.href = 'https://paypal.me/' + t.pay.paypal + '/' + Number(t.owed).toFixed(2) + 'USD'; a.target = '_blank'; a.rel = 'noopener';
+          a.textContent = 'Pay $' + t.owed + ' with PayPal'; p.appendChild(a); p.appendChild(document.createTextNode(' (add ' + t.id + ' in the note)'));
+        } else p.appendChild(document.createTextNode(x[1]));
+        $('pay').appendChild(p);
       });
     }
     if (t.status === 'Confirmed') {

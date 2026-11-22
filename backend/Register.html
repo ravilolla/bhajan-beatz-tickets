@@ -127,6 +127,11 @@
     line('Amount due:', '$' + t.owed, true);
     line('Zelle:', t.pay.zelleTo + ' (' + t.pay.zelleName + ')');
     line('Zelle memo:', t.id, true);
+    if (t.pay.paypal) {
+      var p = document.createElement('p'); p.style.margin = '0 0 8px'; var l = document.createElement('b'); l.textContent = 'PayPal: '; p.appendChild(l);
+      var a = document.createElement('a'); a.href = 'https://paypal.me/' + t.pay.paypal + '/' + Number(t.owed).toFixed(2) + 'USD'; a.target = '_blank'; a.rel = 'noopener';
+      a.textContent = 'Pay $' + t.owed + ' with PayPal'; p.appendChild(a); p.appendChild(document.createTextNode(' (add ' + t.id + ' in the note)')); b.appendChild(p);
+    }
     line('Cash:', t.pay.cash + ' Mention ' + t.id + '.');
     line('Pay within:', t.pay.days + ' days');
   }

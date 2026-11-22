@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Bhajan Beatz · Report</title><meta name="robots" content="noindex"><link rel="stylesheet" href="style.css?v=mwsdgbkc"><script src="config.js?v=mwsdgbkc"></script><script src="api.js?v=mwsdgbkc"></script>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Bhajan Beatz · Report</title><meta name="robots" content="noindex"><link rel="stylesheet" href="style.css?v=mwsek528"><script src="config.js?v=mwsek528"></script><script src="api.js?v=mwsek528"></script>
 <style>
   .wrap { max-width:720px; }
   .stats { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:14px; }
@@ -97,7 +97,7 @@
     $('moneyCard').style.display = 'block';
     $('mCol').textContent = money(r.collected); $('mDue').textContent = money(r.pendingAmount);
     $('mZel').textContent = money(r.collectedBy.Zelle || 0); $('mCash').textContent = money(r.collectedBy.Cash || 0);
-    $('mSub').textContent = (r.tierFill || []).map(function (t) { return (t.price ? money(t.price) : 'Free') + ' tier: ' + t.taken + '/' + t.seats + ' taken'; }).join(' · ') + ' · ' + r.pendingSeats + ' seats held but unpaid (' + r.pendingRegs + ' registrations) · expected total ' + money(r.expected);
+    $('mSub').textContent = (r.tierFill || []).map(function (t) { return (t.price ? money(t.price) : 'Free') + ' tier: ' + t.taken + '/' + t.seats + ' taken'; }).join(' · ') + ' · ' + r.pendingSeats + ' seats held but unpaid (' + r.pendingRegs + ' registrations) · expected total ' + money(r.expected) + (r.collectedBy.PayPal ? ' · by PayPal ' + money(r.collectedBy.PayPal) : '');
     google.script.run.withSuccessHandler(function (list) {
       var box = $('pending'); box.innerHTML = '';
       if (!list.length) { box.innerHTML = '<p style="color:var(--muted)">Nobody is waiting. 🎉</p>'; return; }
@@ -106,7 +106,7 @@
         var tr = document.createElement('tr');
         cell(tr, t.name + ' · ' + t.id); cell(tr, t.party + ' ppl', 'n'); cell(tr, money(t.owed), 'n');
         var td = document.createElement('td'); td.className = 'n'; td.style.whiteSpace = 'nowrap';
-        ['Zelle', 'Cash'].forEach(function (via) {
+        ['Zelle', 'PayPal', 'Cash'].forEach(function (via) {
           var b = document.createElement('button'); b.textContent = via; b.className = 'secondary';
           b.style.cssText = 'width:auto;margin:0 0 0 6px;padding:6px 10px;font-size:13px';
           b.onclick = function () {

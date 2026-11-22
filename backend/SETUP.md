@@ -107,3 +107,6 @@ Seats are priced by their place in line: by default the first 50 are free, the n
 - Fully free orders are confirmed immediately and get their QR ticket by email. Orders with anything to pay go to Pending payment (Zelle/cash) as before.
 - An order's price is locked when it is placed. If someone cancels, the next registrant gets the cheapest open seat.
 - To change tiers, edit `PRICE_TIERS` and deploy a New version. `PRICE_TIERS: []` goes back to one flat `PRICE_PER_PERSON`.
+
+## PayPal (optional)
+Set `PAYPAL_ME` in `Code.gs` to your PayPal.me name (e.g. `'SaiSannidhi'` for paypal.me/SaiSannidhi). People then get a "Pay $X with PayPal" link with the amount filled in, and are asked to put their ticket ID in the note. Like Zelle, you confirm it by tapping **PayPal** next to their name on the report page (or the sheet menu). Leave `PAYPAL_ME: ''` to hide PayPal.

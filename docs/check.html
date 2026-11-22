@@ -1,0 +1,15 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bhakti Beats · Connection check</title><meta name="robots" content="noindex"><link rel="stylesheet" href="style.css">
+<script src="config.js"></script><script src="api.js"></script></head><body><div class="wrap">
+<div class="brand"><div class="k">BHAKTI BEATS</div><h1>Connection check</h1></div>
+<div class="card"><p id="r">Checking…</p><p class="fine" id="u" style="text-align:left;word-break:break-all"></p></div></div>
+<script>
+  document.getElementById('u').textContent = 'Backend: ' + window.BB_API;
+  google.script.run.withSuccessHandler(function (v) {
+    document.getElementById('r').innerHTML = v >= 3 ? '<span class="pill ok">Connected</span> Backend version ' + v + '. Everything is wired up.'
+      : '<span class="pill warn">Old backend</span> Version ' + v + '. Paste the latest Code.gs and deploy a New version.';
+  }).withFailureHandler(function (e) {
+    document.getElementById('r').innerHTML = '<span class="pill bad">Not connected</span> ';
+    document.getElementById('r').appendChild(document.createTextNode(e.message + ' Most likely the latest Code.gs is not deployed yet (Deploy, Manage deployments, pencil, New version), or the backend link above is not your current /exec link.'));
+  }).apiVersion();
+</script></body></html>

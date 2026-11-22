@@ -23,14 +23,24 @@ fs.mkdirSync(out, { recursive: true });
 fs.writeFileSync(path.join(out, 'style.css'),
   fs.readFileSync(path.join(dir, 'Style.html'), 'utf8').replace(/<\/?style>/g, '').trim() + '\n');
 fs.writeFileSync(path.join(out, 'config.js'), 'window.BB_API = ' + JSON.stringify(API) + ';\n');
-fs.writeFileSync(path.join(out, 'api.js'), `// Stand-in for google.script.run that calls the Apps Script backend over HTTPS.
+fs.writeFileSync(path.join(out, 'api.js'), `// Stand-in for google.script.run that calls the Apps Script backend.
+// Uses JSONP (a <script> tag) so browsers' cross-site (CORS) rules never get in the way.
 (function () {
+  var n = 0;
   function call(fn, args, ok, fail) {
-    fetch(window.BB_API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                           body: JSON.stringify({ fn: fn, args: args }) })
-      .then(function (r) { return r.json(); })
-      .then(function (j) { if (j.ok) { if (ok) ok(j.result); } else if (fail) fail(new Error(j.error)); })
-      .catch(function () { if (fail) fail(new Error('Could not reach the server. Please check your connection and try again.')); });
+    var cb = '__bb' + Date.now() + '_' + (n++), done = false, s = document.createElement('script');
+    function finish() { done = true; clearTimeout(t); try { delete window[cb]; } catch (e) { window[cb] = undefined; } s.remove(); }
+    var t = setTimeout(function () {
+      if (done) return; finish();
+      if (fail) fail(new Error('The server did not answer. Please try again in a moment.'));
+    }, 25000);
+    window[cb] = function (j) {
+      if (done) return; finish();
+      if (j && j.ok) { if (ok) ok(j.result); } else if (fail) fail(new Error((j && j.error) || 'Something went wrong.'));
+    };
+    s.onerror = function () { if (done) return; finish(); if (fail) fail(new Error('Could not reach the server. Please check your connection and try again.')); };
+    s.src = window.BB_API + '?fn=' + encodeURIComponent(fn) + '&args=' + encodeURIComponent(JSON.stringify(args)) + '&callback=' + cb;
+    document.head.appendChild(s);
   }
   function runner(ok, fail) {
     return new Proxy({}, { get: function (_, k) {
@@ -41,6 +51,23 @@ fs.writeFileSync(path.join(out, 'api.js'), `// Stand-in for google.script.run th
   }
   window.google = { script: { run: runner(null, null) } };
 })();
+`);
+// Connection check page for troubleshooting.
+fs.writeFileSync(path.join(out, 'check.html'), `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bhakti Beats · Connection check</title><meta name="robots" content="noindex"><link rel="stylesheet" href="style.css">
+<script src="config.js"></script><script src="api.js"></script></head><body><div class="wrap">
+<div class="brand"><div class="k">BHAKTI BEATS</div><h1>Connection check</h1></div>
+<div class="card"><p id="r">Checking…</p><p class="fine" id="u" style="text-align:left;word-break:break-all"></p></div></div>
+<script>
+  document.getElementById('u').textContent = 'Backend: ' + window.BB_API;
+  google.script.run.withSuccessHandler(function (v) {
+    document.getElementById('r').innerHTML = v >= 3 ? '<span class="pill ok">Connected</span> Backend version ' + v + '. Everything is wired up.'
+      : '<span class="pill warn">Old backend</span> Version ' + v + '. Paste the latest Code.gs and deploy a New version.';
+  }).withFailureHandler(function (e) {
+    document.getElementById('r').innerHTML = '<span class="pill bad">Not connected</span> ';
+    document.getElementById('r').appendChild(document.createTextNode(e.message + ' Most likely the latest Code.gs is not deployed yet (Deploy, Manage deployments, pencil, New version), or the backend link above is not your current /exec link.'));
+  }).apiVersion();
+</script></body></html>
 `);
 fs.writeFileSync(path.join(out, '.nojekyll'), '');
 

@@ -66,6 +66,7 @@ function setDoorPin(pin) {
 // ---------- Web entry point ----------
 function doGet(e) {
   var p = (e && e.parameter) || {};
+  if (p.fn) return jsonp_(p);
   if (p.page === 'ping') return diagnose_();
   if (p.page === 'hello') {
     // Simplest possible page: no template, no styles, no scripts. If this is blank too, the browser
@@ -97,6 +98,7 @@ function diagnose_() {
   try { out.push('OK   sheet "' + SETTINGS.SHEET_NAME + '" rows: ' + rows_().length); } catch (err) { out.push('ERROR sheet: ' + err + ' (run setup from the editor)'); }
   out.push((PropertiesService.getScriptProperties().getProperty('DOOR_PIN') ? 'OK  ' : 'MISSING') + ' door PIN' );
   if (paidEvent_() && /FILL IN/.test(SETTINGS.ZELLE_TO + SETTINGS.ZELLE_NAME)) out.push('TODO Zelle details still say FILL IN');
+  out.push('API version: ' + API_VERSION + ' (the site needs 3 or higher)');
   out.push('Web app URL: ' + appUrl_());
   out.push('', 'If every line says OK but the normal page is blank, your browser is blocking Google\'s page frame.',
            'Try a private/incognito window, your phone on mobile data, or turn off ad/tracker blockers for script.google.com.');
@@ -121,20 +123,30 @@ function include(name) { return HtmlService.createHtmlOutputFromFile(name).getCo
 
 // ---------- JSON API for the public site (GitHub Pages) ----------
 // The site POSTs {fn, args} as text/plain (no CORS preflight). Only these functions can be called.
+var API_VERSION = 3;
 function doPost(e) {
+  var req; try { req = JSON.parse((e && e.postData && e.postData.contents) || '{}'); } catch (x) { req = {}; }
+  return ContentService.createTextOutput(JSON.stringify(api_(req.fn, req.args))).setMimeType(ContentService.MimeType.JSON);
+}
+/** Same API over GET as JSONP (a <script> tag), which never hits browser cross-site (CORS) rules. */
+function jsonp_(p) {
+  var args; try { args = JSON.parse(p.args || '[]'); } catch (x) { args = []; }
+  var cb = /^[A-Za-z_$][\w$.]{0,60}$/.test(p.callback || '') ? p.callback : 'console.log';
+  return ContentService.createTextOutput(cb + '(' + JSON.stringify(api_(p.fn, args)) + ');')
+    .setMimeType(ContentService.MimeType.JAVASCRIPT);
+}
+function api_(fnName, args) {
   // Only these functions can be called from the site.
   var API = { getAvailability: getAvailability, register: register, getTicket: getTicket, verifyPin: verifyPin,
               checkIn: checkIn, doorStats: doorStats, doorSearch: doorSearch, reportData: reportData,
               markPaid: markPaid, pendingList: pendingList };
-  var out;
+  API.apiVersion = function () { return API_VERSION; };
   try {
-    var req = JSON.parse((e && e.postData && e.postData.contents) || '{}');
-    if (!Object.prototype.hasOwnProperty.call(API, req.fn)) throw new Error('Unknown request.');
-    out = { ok: true, result: API[req.fn].apply(null, Array.isArray(req.args) ? req.args : []) };
+    if (!Object.prototype.hasOwnProperty.call(API, fnName)) throw new Error('Unknown request.');
+    return { ok: true, result: API[fnName].apply(null, Array.isArray(args) ? args : []) };
   } catch (err) {
-    out = { ok: false, error: String(err && err.message || err).replace(/^Error:\s*/, '') };
+    return { ok: false, error: String(err && err.message || err).replace(/^Error:\s*/, '') };
   }
-  return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
 }
 
 // ---------- Called from the pages ----------

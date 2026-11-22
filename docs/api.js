@@ -1,11 +1,21 @@
-// Stand-in for google.script.run that calls the Apps Script backend over HTTPS.
+// Stand-in for google.script.run that calls the Apps Script backend.
+// Uses JSONP (a <script> tag) so browsers' cross-site (CORS) rules never get in the way.
 (function () {
+  var n = 0;
   function call(fn, args, ok, fail) {
-    fetch(window.BB_API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                           body: JSON.stringify({ fn: fn, args: args }) })
-      .then(function (r) { return r.json(); })
-      .then(function (j) { if (j.ok) { if (ok) ok(j.result); } else if (fail) fail(new Error(j.error)); })
-      .catch(function () { if (fail) fail(new Error('Could not reach the server. Please check your connection and try again.')); });
+    var cb = '__bb' + Date.now() + '_' + (n++), done = false, s = document.createElement('script');
+    function finish() { done = true; clearTimeout(t); try { delete window[cb]; } catch (e) { window[cb] = undefined; } s.remove(); }
+    var t = setTimeout(function () {
+      if (done) return; finish();
+      if (fail) fail(new Error('The server did not answer. Please try again in a moment.'));
+    }, 25000);
+    window[cb] = function (j) {
+      if (done) return; finish();
+      if (j && j.ok) { if (ok) ok(j.result); } else if (fail) fail(new Error((j && j.error) || 'Something went wrong.'));
+    };
+    s.onerror = function () { if (done) return; finish(); if (fail) fail(new Error('Could not reach the server. Please check your connection and try again.')); };
+    s.src = window.BB_API + '?fn=' + encodeURIComponent(fn) + '&args=' + encodeURIComponent(JSON.stringify(args)) + '&callback=' + cb;
+    document.head.appendChild(s);
   }
   function runner(ok, fail) {
     return new Proxy({}, { get: function (_, k) {

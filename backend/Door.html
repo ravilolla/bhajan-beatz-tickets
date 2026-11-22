@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html><head><base target="_top"><?!= include('Style'); ?>
+<style>
+  .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px; }
+  .stat { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; text-align:center; }
+  .stat b { display:block; font-size:26px; color:var(--gold); }
+  .stat span { font-size:12px; color:var(--muted); }
+  .row { display:flex; gap:10px; align-items:center; justify-content:space-between; padding:12px 0; border-top:1px solid var(--line); }
+  .row:first-child { border-top:0; }
+  .row button { width:auto; margin:0; padding:10px 14px; font-size:15px; }
+  .who small { color:var(--muted); display:block; }
+</style></head>
+<body><div class="wrap">
+  <div class="brand"><div class="k">BHAKTI BEATS · DOOR DESK</div><h1>Check-in</h1></div>
+
+  <div class="card" id="lock">
+    <label for="pin">Door PIN</label>
+    <input id="pin" type="password" inputmode="numeric" autocomplete="off">
+    <button id="unlock">Unlock</button>
+    <div class="msg" id="lockMsg"></div>
+  </div>
+
+  <div id="desk" style="display:none">
+    <div class="stats">
+      <div class="stat"><b id="sArr">–</b><span>arrived</span></div>
+      <div class="stat"><b id="sConf">–</b><span>registered</span></div>
+      <div class="stat"><b id="sWait">–</b><span>waitlist</span></div>
+    </div>
+    <div class="card">
+      <p style="margin-top:0"><b>To scan:</b> open your phone's camera and point it at the guest's QR code, then tap the link. It opens their ticket with a <b>Check in</b> button (this phone stays unlocked).</p>
+      <label for="q">Or search by name, email or ticket ID</label>
+      <input id="q" placeholder="e.g. Sharma or BB-7K2Q9X" autocomplete="off">
+      <div id="results" style="margin-top:8px"></div>
+      <button class="secondary" id="lockAgain">Lock this phone</button>
+    </div>
+  </div>
+</div>
+<script>
+  function $(id) { return document.getElementById(id); }
+  function getPin() { try { return localStorage.getItem('bb_door_pin') || ''; } catch (e) { return window._pin || ''; } }
+  function setPin(p) { window._pin = p; try { if (p) localStorage.setItem('bb_door_pin', p); else localStorage.removeItem('bb_door_pin'); } catch (e) {} }
+  function fail(err) { var m = String(err && err.message || err); if (/PIN/.test(m)) { setPin(''); show(false); } }
+
+  function show(unlocked) { $('lock').style.display = unlocked ? 'none' : 'block'; $('desk').style.display = unlocked ? 'block' : 'none'; if (unlocked) stats(); }
+  function stats() {
+    google.script.run.withSuccessHandler(function (s) {
+      $('sArr').textContent = s.arrived; $('sConf').textContent = s.confirmed + '/' + s.capacity; $('sWait').textContent = s.waitlist;
+    }).withFailureHandler(fail).doorStats(getPin());
+  }
+  $('unlock').onclick = function () {
+    var v = $('pin').value.trim();
+    google.script.run.withSuccessHandler(function (ok) {
+      if (ok) { setPin(v); show(true); } else { $('lockMsg').className = 'msg err'; $('lockMsg').textContent = 'Wrong PIN.'; }
+    }).verifyPin(v);
+  };
+  $('lockAgain').onclick = function () { setPin(''); $('pin').value = ''; show(false); };
+
+  var timer;
+  $('q').addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(search, 300); });
+  function search() {
+    var q = $('q').value;
+    if (q.trim().length < 2) { $('results').innerHTML = ''; return; }
+    google.script.run.withSuccessHandler(render).withFailureHandler(fail).doorSearch(getPin(), q);
+  }
+  function render(list) {
+    var box = $('results'); box.innerHTML = '';
+    if (!list.length) { box.innerHTML = '<p style="color:var(--muted)">No match.</p>'; return; }
+    list.forEach(function (t) {
+      var row = document.createElement('div'); row.className = 'row';
+      var who = document.createElement('div'); who.className = 'who';
+      who.textContent = t.name;
+      var sm = document.createElement('small');
+      sm.textContent = t.id + ' · party of ' + t.party + ' · ' + (t.status === 'Pending payment' ? 'NOT PAID, $' + t.owed + ' due' : t.status !== 'Confirmed' ? t.status : t.inCount >= t.party ? 'arrived ' + t.inAt : t.inCount ? t.inCount + ' arrived' : 'not arrived');
+      who.appendChild(sm); row.appendChild(who);
+      if (t.status === 'Pending payment') {
+        var pb = document.createElement('button'); pb.textContent = 'Took $' + t.owed + ' cash';
+        pb.onclick = function () {
+          pb.disabled = true;
+          google.script.run.withSuccessHandler(function (r) { pb.textContent = r.ok ? 'Paid ✓' : r.message; search(); })
+            .withFailureHandler(function (e) { pb.disabled = false; fail(e); }).markPaid(t.id, getPin(), 'Cash');
+        };
+        row.appendChild(pb);
+      } else if (t.status === 'Confirmed' && t.inCount < t.party) {
+        var b = document.createElement('button'); b.textContent = 'Check in';
+        b.onclick = function () {
+          b.disabled = true;
+          google.script.run.withSuccessHandler(function (r) { b.textContent = r.ok ? 'Admitted ✓' : r.message; stats(); search(); })
+            .withFailureHandler(function (e) { b.disabled = false; fail(e); }).checkIn(t.id, getPin(), t.party - t.inCount);
+        };
+        row.appendChild(b);
+      } else {
+        var p = document.createElement('span'); p.className = 'pill ' + (t.status === 'Confirmed' ? 'ok' : 'warn');
+        p.textContent = t.status === 'Confirmed' ? 'In' : t.status; row.appendChild(p);
+      }
+      box.appendChild(row);
+    });
+  }
+  if (getPin()) google.script.run.withSuccessHandler(function (ok) { show(ok); if (!ok) setPin(''); }).verifyPin(getPin());
+</script>
+</body></html>

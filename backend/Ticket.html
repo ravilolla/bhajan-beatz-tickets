@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html><head><base target="_top"><?!= include('Style'); ?>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script></head>
+<body><div class="wrap">
+  <div class="brand">
+    <div class="k">BHAKTI BEATS · ENTRY TICKET</div>
+    <h1>Bhajan Jamming &amp; Clubbing</h1>
+    <div class="when"><?= S.EVENT_WHEN ?></div>
+    <div class="where"><?= S.EVENT_WHERE ?></div>
+  </div>
+  <div class="card center" id="card"><p>Loading ticket…</p></div>
+
+  <!-- Door volunteers only: appears when this phone has the door PIN unlocked -->
+  <div class="card center noprint" id="door" style="display:none;margin-top:16px">
+    <div id="doorResult"></div>
+    <div id="partyPick" style="display:none"><label for="cnt">How many arriving now?</label><select id="cnt"></select></div>
+    <button id="checkBtn">Check in</button>
+  </div>
+  <p class="fine noprint" id="volLink"><a href="#" id="unlock">Door volunteer?</a></p>
+</div>
+<script>
+  var TID = <?= ticketId ?>, APP = <?= appUrl ?>;
+  function $(id) { return document.getElementById(id); }
+  function getPin() { try { return localStorage.getItem('bb_door_pin') || ''; } catch (e) { return window._pin || ''; } }
+  function setPin(p) { window._pin = p; try { localStorage.setItem('bb_door_pin', p); } catch (e) {} }
+  var ticket = null;
+
+  google.script.run.withSuccessHandler(function (t) {
+    ticket = t;
+    if (!t) { $('card').innerHTML = '<span class="pill bad">Not found</span><p>We could not find ticket <b></b>. Please check the link in your email.</p>'; $('card').querySelector('b').textContent = TID; return; }
+    var pill = t.status !== 'Confirmed' ? '<span class="pill warn">' + t.status + '</span>' : t.checkedIn ? '<span class="pill ok">Checked in</span>' : '<span class="pill ok">Confirmed</span>';
+    $('card').innerHTML = pill + '<h2 style="margin:10px 0 0" id="nm"></h2><p style="color:var(--muted);margin:2px 0" id="pty"></p>' +
+      (t.status === 'Pending payment' ? '<div id="pay" style="text-align:left;background:#1d0833;border-radius:12px;padding:14px;margin-top:12px"></div><div class="tid" id="tid" style="margin-top:12px"></div><p class="fine">Your QR entry code appears here (and in your email) once payment is received.</p>' :
+       t.status === 'Confirmed' ? '<div class="qr" id="qr"></div><div class="tid" id="tid"></div>' +
+      '<p class="fine">Show this QR code at the door. A screenshot works too.</p><button class="secondary noprint" onclick="window.print()">Print or save as PDF</button>' : '<p>This registration is not confirmed yet, so there is no entry code.</p>');
+    $('nm').textContent = t.name; $('pty').textContent = 'Admits ' + t.party + (t.party > 1 ? ' people' : ' person');
+    if (t.status === 'Pending payment') {
+      $('tid').textContent = t.id;
+      [['Amount due:', '$' + t.owed], ['Zelle:', t.pay.zelleTo + ' (' + t.pay.zelleName + ')'], ['Zelle memo:', t.id], ['Cash:', t.pay.cash], ['Pay within:', t.pay.days + ' days of registering']].forEach(function (x) {
+        var p = document.createElement('p'); p.style.margin = '0 0 8px'; var b = document.createElement('b'); b.textContent = x[0] + ' '; p.appendChild(b); p.appendChild(document.createTextNode(x[1])); $('pay').appendChild(p);
+      });
+    }
+    if (t.status === 'Confirmed') {
+      $('tid').textContent = t.id;
+      new QRCode($('qr'), { text: APP + '?t=' + encodeURIComponent(t.id), width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M });
+    }
+    if (getPin()) showDoor();
+  }).withFailureHandler(function () { $('card').textContent = 'Could not load ticket. Please refresh.'; }).getTicket(TID);
+
+  function showDoor() {
+    if (!ticket) return;
+    $('door').style.display = 'block'; $('volLink').style.display = 'none';
+    var c = $('cnt'); c.innerHTML = '';
+    for (var i = ticket.party; i >= 1; i--) { var o = document.createElement('option'); o.value = i; o.textContent = i === ticket.party ? 'All ' + i : i; c.appendChild(o); }
+    $('partyPick').style.display = ticket.party > 1 ? 'block' : 'none';
+    if (ticket.status === 'Pending payment') {
+      $('partyPick').style.display = 'none';
+      $('doorResult').innerHTML = '<span class="pill warn">Not paid yet: $' + ticket.owed + ' due</span>';
+      $('checkBtn').textContent = 'Collected $' + ticket.owed + ' cash: mark paid';
+      $('checkBtn').onclick = function () {
+        $('checkBtn').disabled = true;
+        google.script.run.withSuccessHandler(function (r) {
+          $('checkBtn').disabled = false; $('doorResult').textContent = r.message;
+          if (r.ok && r.full) { ticket.status = 'Confirmed'; $('checkBtn').textContent = 'Check in'; $('checkBtn').onclick = checkInNow; $('partyPick').style.display = ticket.party > 1 ? 'block' : 'none'; }
+        }).withFailureHandler(function (err) { $('checkBtn').disabled = false; $('doorResult').textContent = String(err.message || err); }).markPaid(TID, getPin(), 'Cash');
+      };
+    }
+    if (ticket.checkedIn) $('doorResult').innerHTML = '<span class="pill warn">Already checked in</span>';
+  }
+  $('unlock').onclick = function (e) {
+    e.preventDefault();
+    $('volLink').innerHTML = '<input id="pinIn" type="password" inputmode="numeric" placeholder="Door PIN" style="max-width:200px"> <button id="pinGo" class="secondary" style="max-width:200px">Unlock</button>';
+    $('pinGo').onclick = function () {
+      var v = $('pinIn').value.trim();
+      google.script.run.withSuccessHandler(function (ok) { if (ok) { setPin(v); showDoor(); } else { $('pinIn').value = ''; $('pinIn').placeholder = 'Wrong PIN'; } }).verifyPin(v);
+    };
+  };
+  function checkInNow() {
+    $('checkBtn').disabled = true;
+    google.script.run.withSuccessHandler(function (r) {
+      $('checkBtn').disabled = false;
+      var cls = r.ok ? 'ok' : (r.already ? 'warn' : 'bad');
+      $('doorResult').innerHTML = '<div style="font-size:22px;font-weight:800;margin-bottom:4px" class="pill ' + cls + '"></div><p id="dr2" style="color:var(--muted)"></p>';
+      $('doorResult').firstChild.textContent = r.ok ? 'Admit ✓' : r.already ? 'Already checked in' : 'Do not admit';
+      $('dr2').textContent = r.message + (r.ticket ? ' · ' + r.ticket.inCount + ' of ' + r.ticket.party + ' arrived' + (r.ticket.inAt ? ' · first at ' + r.ticket.inAt : '') : '');
+      if (r.ticket && r.ticket.inCount >= r.ticket.party) { $('checkBtn').style.display = 'none'; $('partyPick').style.display = 'none'; }
+    }).withFailureHandler(function (err) {
+      $('checkBtn').disabled = false; $('doorResult').textContent = String(err.message || err);
+      if (/PIN/.test(String(err.message))) { setPin(''); }
+    }).checkIn(TID, getPin(), $('cnt').value);
+  }
+  $('checkBtn').onclick = checkInNow;
+</script>
+</body></html>

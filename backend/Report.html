@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html><head><base target="_top"><?!= include('Style'); ?>
+<style>
+  .wrap { max-width:720px; }
+  .stats { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:14px; }
+  @media (min-width:600px) { .stats { grid-template-columns:repeat(4,1fr); } }
+  .stat { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; text-align:center; }
+  .stat b { display:block; font-size:28px; color:var(--gold); }
+  .stat span { font-size:12px; color:var(--muted); }
+  h3 { margin:0 0 10px; font-size:16px; }
+  .card + .card { margin-top:14px; }
+  .bars { display:flex; align-items:flex-end; gap:4px; height:120px; border-bottom:1px solid var(--line); }
+  .bars div { flex:1; min-width:6px; background:linear-gradient(180deg,var(--pink),var(--pink2)); border-radius:4px 4px 0 0; position:relative; }
+  .axis { display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-top:4px; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  td, th { padding:8px 4px; border-top:1px solid var(--line); text-align:left; }
+  th { color:var(--muted); font-weight:600; border-top:0; }
+  td.n, th.n { text-align:right; }
+</style></head>
+<body><div class="wrap">
+  <div class="brand"><div class="k">BHAKTI BEATS · ORGANIZER REPORT</div><h1>Registrations</h1><div class="where" id="asof"></div></div>
+
+  <div class="card" id="lock">
+    <label for="pin">Door PIN</label>
+    <input id="pin" type="password" inputmode="numeric" autocomplete="off">
+    <button id="unlock">Unlock</button>
+    <div class="msg" id="lockMsg"></div>
+  </div>
+
+  <div id="rep" style="display:none">
+    <div class="stats">
+      <div class="stat"><b id="sSeats">–</b><span>seats taken</span></div>
+      <div class="stat"><b id="sLeft">–</b><span>seats left</span></div>
+      <div class="stat"><b id="sWait">–</b><span>on waitlist</span></div>
+      <div class="stat"><b id="sIn">–</b><span>checked in</span></div>
+    </div>
+    <div class="card">
+      <div class="seats" id="fillTxt" style="text-align:left"></div>
+      <div class="bar"><i id="fill" style="width:0"></i></div>
+      <p style="color:var(--muted);font-size:14px;margin:10px 0 0" id="sub"></p>
+    </div>
+    <div class="card" id="moneyCard" style="display:none">
+      <h3>Payments</h3>
+      <div class="stats" style="margin-bottom:8px">
+        <div class="stat"><b id="mCol">–</b><span>collected</span></div>
+        <div class="stat"><b id="mDue">–</b><span>still due</span></div>
+        <div class="stat"><b id="mZel">–</b><span>by Zelle</span></div>
+        <div class="stat"><b id="mCash">–</b><span>in cash</span></div>
+      </div>
+      <p style="color:var(--muted);font-size:14px;margin:0 0 10px" id="mSub"></p>
+      <h3 style="margin-top:14px">Waiting for payment</h3>
+      <p style="color:var(--muted);font-size:13px;margin:0 0 6px">Match a Zelle memo (ticket ID) or cash, then tap the button. The person is emailed their QR ticket straight away.</p>
+      <div id="pending"></div>
+    </div>
+    <div class="card"><h3>Seats registered per day</h3><div class="bars" id="bars"></div><div class="axis"><span id="d0"></span><span id="d1"></span></div></div>
+    <div class="card"><h3>Party sizes</h3><table id="mix"></table></div>
+    <div class="card"><h3>Latest sign-ups</h3><table id="recent"></table></div>
+    <button class="secondary" id="refresh">Refresh</button>
+  </div>
+</div>
+<script>
+  function $(id) { return document.getElementById(id); }
+  function getPin() { try { return localStorage.getItem('bb_door_pin') || ''; } catch (e) { return window._pin || ''; } }
+  function setPin(p) { window._pin = p; try { if (p) localStorage.setItem('bb_door_pin', p); else localStorage.removeItem('bb_door_pin'); } catch (e) {} }
+  function cell(tr, text, cls, tag) { var c = document.createElement(tag || 'td'); c.textContent = text; if (cls) c.className = cls; tr.appendChild(c); }
+
+  function load() {
+    google.script.run.withSuccessHandler(render).withFailureHandler(function (e) {
+      setPin(''); $('rep').style.display = 'none'; $('lock').style.display = 'block';
+      $('lockMsg').className = 'msg err'; $('lockMsg').textContent = String(e.message || e).replace(/^Error:\s*/, '');
+    }).reportData(getPin());
+  }
+  function render(r) {
+    $('lock').style.display = 'none'; $('rep').style.display = 'block';
+    $('asof').textContent = 'Updated ' + new Date().toLocaleString();
+    $('sSeats').textContent = r.seats; $('sLeft').textContent = r.seatsLeft; $('sWait').textContent = r.waitlistSeats; $('sIn').textContent = r.arrivedSeats;
+    $('fillTxt').textContent = r.seats + ' of ' + r.capacity + ' seats (' + Math.round(r.seats / r.capacity * 100) + '% full)';
+    $('fill').style.width = Math.min(100, r.seats / r.capacity * 100) + '%';
+    $('sub').textContent = r.registrations + ' registrations' + (r.paidEvent ? ' (' + r.pendingRegs + ' unpaid)' : '') + ' · ' + r.last24h + ' seats in the last 24 hours · ' + r.waitlistRegs + ' waitlisted · ' + r.cancelledRegs + ' cancelled' +
+      (r.arrivedSeats ? ' · ' + r.arrivedRegs + ' parties arrived, ' + (r.seats - r.arrivedSeats) + ' seats not yet arrived' : '');
+
+    renderMoney(r);
+    var days = Object.keys(r.byDay).sort(), bars = $('bars'); bars.innerHTML = '';
+    var max = Math.max.apply(null, days.map(function (d) { return r.byDay[d]; }).concat([1]));
+    days.forEach(function (d) { var b = document.createElement('div'); b.style.height = Math.max(4, r.byDay[d] / max * 100) + '%'; b.title = d + ': ' + r.byDay[d] + ' seats'; bars.appendChild(b); });
+    $('d0').textContent = days[0] || 'No sign-ups yet'; $('d1').textContent = days.length > 1 ? days[days.length - 1] : '';
+
+    var mix = $('mix'); mix.innerHTML = ''; var h = document.createElement('tr'); cell(h, 'Party size', '', 'th'); cell(h, 'Registrations', 'n', 'th'); cell(h, 'Seats', 'n', 'th'); mix.appendChild(h);
+    Object.keys(r.partyMix).sort().forEach(function (k) { var tr = document.createElement('tr'); cell(tr, k); cell(tr, r.partyMix[k], 'n'); cell(tr, r.partyMix[k] * k, 'n'); mix.appendChild(tr); });
+
+    var rec = $('recent'); rec.innerHTML = ''; h = document.createElement('tr'); cell(h, 'Name', '', 'th'); cell(h, 'Party', 'n', 'th'); cell(h, 'Status', '', 'th'); cell(h, 'When', '', 'th'); rec.appendChild(h);
+    r.recent.forEach(function (x) { var tr = document.createElement('tr'); cell(tr, x.name); cell(tr, x.party, 'n'); cell(tr, x.status); cell(tr, x.at); rec.appendChild(tr); });
+  }
+  function money(n) { return '$' + Math.round(n); }
+  function renderMoney(r) {
+    if (!r.paidEvent && !r.collected) return;
+    $('moneyCard').style.display = 'block';
+    $('mCol').textContent = money(r.collected); $('mDue').textContent = money(r.pendingAmount);
+    $('mZel').textContent = money(r.collectedBy.Zelle || 0); $('mCash').textContent = money(r.collectedBy.Cash || 0);
+    $('mSub').textContent = money(r.price) + ' per person · ' + r.pendingSeats + ' seats held but unpaid (' + r.pendingRegs + ' registrations) · expected total ' + money(r.expected);
+    google.script.run.withSuccessHandler(function (list) {
+      var box = $('pending'); box.innerHTML = '';
+      if (!list.length) { box.innerHTML = '<p style="color:var(--muted)">Nobody is waiting. 🎉</p>'; return; }
+      var tb = document.createElement('table'); box.appendChild(tb);
+      list.forEach(function (t) {
+        var tr = document.createElement('tr');
+        cell(tr, t.name + ' · ' + t.id); cell(tr, t.party + ' ppl', 'n'); cell(tr, money(t.owed), 'n');
+        var td = document.createElement('td'); td.className = 'n'; td.style.whiteSpace = 'nowrap';
+        ['Zelle', 'Cash'].forEach(function (via) {
+          var b = document.createElement('button'); b.textContent = via; b.className = 'secondary';
+          b.style.cssText = 'width:auto;margin:0 0 0 6px;padding:6px 10px;font-size:13px';
+          b.onclick = function () {
+            b.disabled = true;
+            google.script.run.withSuccessHandler(function (res) { td.textContent = res.ok ? 'Paid ✓' : res.message; setTimeout(load, 1500); })
+              .withFailureHandler(function (e) { b.disabled = false; td.textContent = String(e.message || e); }).markPaid(t.id, getPin(), via);
+          };
+          td.appendChild(b);
+        });
+        tr.appendChild(td); tb.appendChild(tr);
+      });
+    }).pendingList(getPin());
+  }
+  $('unlock').onclick = function () { setPin($('pin').value.trim()); load(); };
+  $('refresh').onclick = load;
+  if (getPin()) load();
+</script>
+</body></html>

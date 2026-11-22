@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Bhakti Beats · Register</title><link rel="stylesheet" href="style.css"><script src="config.js"></script><script src="api.js"></script></head>
+<body><div class="wrap">
+  <div class="brand">
+    <div class="k">BHAKTI BEATS</div>
+    <h1>Bhajan Jamming &amp; Clubbing</h1>
+    <div class="when">Sunday, December 27, 2026 · 4 PM – 8 PM, followed by dinner</div>
+    <div class="where">Sai Sannidhi, Danbury, CT · $50 per person (Zelle or cash) · Registration required</div>
+  </div>
+
+  <div class="card" id="formCard">
+    <div class="seats" id="seats">Checking seats…<div class="bar"><i id="barFill" style="width:0"></i></div></div>
+    <form id="f" novalidate>
+      <label for="name">Full name</label>
+      <input id="name" name="name" autocomplete="name" required maxlength="80">
+      <label for="email">Email (your ticket is sent here)</label>
+      <input id="email" name="email" type="email" autocomplete="email" required maxlength="120">
+      <label for="phone">Phone (optional)</label>
+      <input id="phone" name="phone" type="tel" autocomplete="tel" maxlength="30">
+      <label for="party">How many people, including you?</label>
+      <select id="party" name="party"></select>
+      <p id="total" style="margin:10px 0 0;color:var(--gold);font-weight:600;display:none"></p>
+      <button id="go" type="submit">Get my free ticket</button>
+      <div class="msg" id="msg"></div>
+    </form>
+  </div>
+
+  <div class="card center" id="doneCard" style="display:none">
+    <div id="doneStatus"></div>
+    <h2 id="doneTitle" style="margin:10px 0 4px"></h2>
+    <p id="doneText" style="color:var(--muted)"></p>
+    <div id="payBox" style="display:none;text-align:left;background:#1d0833;border-radius:12px;padding:14px;margin-top:8px"></div>
+    <a id="ticketLink" href="#"><button type="button">View my ticket</button></a>
+  </div>
+
+  <p class="fine">Presented by Sai Sannidhi, in collaboration with Sur Shakti Group<br><i>Music is the soul's language, and God is the soul's energy.</i></p>
+</div>
+<script>
+  var APP = (location.href.replace(/[^\/]*([?#].*)?$/, '') + 'ticket.html'), MAXP = 5, PRICE = 50, LABEL = PRICE > 0 ? 'Reserve my seats' : 'Get my free ticket';
+  function showTotal() { if (PRICE > 0) { var n = +sel.value; $('total').style.display = 'block'; $('total').textContent = 'Total: $' + (PRICE * n) + ' (' + n + ' x $' + PRICE + '), paid by Zelle or cash after you register'; } }
+  var sel = document.getElementById('party');
+  for (var i = 1; i <= MAXP; i++) { var o = document.createElement('option'); o.value = i; o.textContent = i === 1 ? '1 (just me)' : i; sel.appendChild(o); }
+  function $(id) { return document.getElementById(id); }
+  sel.addEventListener('change', showTotal);
+  function showMsg(t, kind) { var m = $('msg'); m.className = 'msg ' + kind; m.textContent = t; }
+
+  function loadSeats() {
+    google.script.run.withSuccessHandler(function (a) {
+      var pct = Math.min(100, Math.round(a.used / a.capacity * 100));
+      $('barFill').style.width = pct + '%';
+      $('seats').firstChild.nodeValue = !a.open ? 'Registration is closed.' :
+        a.left > 0 ? a.left + ' of ' + a.capacity + ' seats left' : 'Event is full: you can still join the waitlist';
+      if (!a.open) $('go').disabled = true;
+      if (a.open && a.left <= 0) $('go').textContent = 'Join the waitlist';
+    }).withFailureHandler(function () { $('seats').firstChild.nodeValue = ''; }).getAvailability();
+  }
+  $('go').textContent = LABEL; showTotal();
+  loadSeats();
+
+  $('f').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var data = { name: $('name').value, email: $('email').value, phone: $('phone').value, party: sel.value };
+    if (!data.name.trim()) return showMsg('Please enter your name.', 'err');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())) return showMsg('Please enter a valid email address.', 'err');
+    $('go').disabled = true; $('go').textContent = 'Saving…'; $('msg').className = 'msg';
+    google.script.run.withSuccessHandler(function (res) {
+      var t = res.ticket, ok = t.status === 'Confirmed', pend = t.status === 'Pending payment';
+      $('formCard').style.display = 'none'; $('doneCard').style.display = 'block';
+      $('doneStatus').innerHTML = ok ? '<span class="pill ok">Confirmed</span>' : pend ? '<span class="pill warn">Seats held · payment needed</span>' : '<span class="pill warn">Waitlist</span>';
+      $('doneTitle').textContent = res.duplicate ? 'You were already registered' : (ok ? 'You\'re in, ' + t.name + '!' : pend ? 'Almost there, ' + t.name + '!' : 'You\'re on the waitlist');
+      $('doneText').textContent = res.duplicate ? 'We emailed your details again. Party of ' + t.party + '.'
+        : ok ? 'Your ticket for a party of ' + t.party + ' has been emailed to you. Show its QR code at the door.'
+        : pend ? 'We\'re holding ' + t.party + (t.party > 1 ? ' seats' : ' seat') + '. Your QR ticket is emailed once we receive payment.'
+             : 'The event is full. We\'ll email you if a seat opens up.';
+      if (pend) payBox(t);
+      $('ticketLink').href = APP + '?t=' + encodeURIComponent(t.id);
+      if (!ok && !pend) $('ticketLink').style.display = 'none';
+      if (pend) $('ticketLink').firstChild.textContent = 'View payment details';
+    }).withFailureHandler(function (err) {
+      $('go').disabled = false; $('go').textContent = LABEL;
+      showMsg((err && err.message ? err.message : String(err)).replace(/^Error:\s*/, ''), 'err');
+    }).register(data);
+  });
+  function payBox(t) {
+    var b = $('payBox'); b.style.display = 'block'; b.innerHTML = '';
+    function line(label, text, strong) { var p = document.createElement('p'); p.style.margin = '0 0 8px'; var l = document.createElement('b'); l.textContent = label + ' '; p.appendChild(l); var s = document.createElement(strong ? 'b' : 'span'); s.textContent = text; p.appendChild(s); b.appendChild(p); }
+    line('Amount due:', '$' + t.owed, true);
+    line('Zelle:', t.pay.zelleTo + ' (' + t.pay.zelleName + ')');
+    line('Zelle memo:', t.id, true);
+    line('Cash:', t.pay.cash + ' Mention ' + t.id + '.');
+    line('Pay within:', t.pay.days + ' days');
+  }
+</script>
+</body></html>

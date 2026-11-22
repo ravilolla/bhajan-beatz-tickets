@@ -98,7 +98,7 @@ function diagnose_() {
   try { out.push('OK   sheet "' + SETTINGS.SHEET_NAME + '" rows: ' + rows_().length); } catch (err) { out.push('ERROR sheet: ' + err + ' (run setup from the editor)'); }
   out.push((PropertiesService.getScriptProperties().getProperty('DOOR_PIN') ? 'OK  ' : 'MISSING') + ' door PIN' );
   if (paidEvent_() && /FILL IN/.test(SETTINGS.ZELLE_TO + SETTINGS.ZELLE_NAME)) out.push('TODO Zelle details still say FILL IN');
-  out.push('API version: ' + API_VERSION + ' (the site needs 3 or higher)');
+  out.push('API version: ' + API_VERSION + ' (the site needs 4 or higher)');
   out.push('Web app URL: ' + appUrl_());
   out.push('', 'If every line says OK but the normal page is blank, your browser is blocking Google\'s page frame.',
            'Try a private/incognito window, your phone on mobile data, or turn off ad/tracker blockers for script.google.com.');
@@ -123,7 +123,7 @@ function include(name) { return HtmlService.createHtmlOutputFromFile(name).getCo
 
 // ---------- JSON API for the public site (GitHub Pages) ----------
 // The site POSTs {fn, args} as text/plain (no CORS preflight). Only these functions can be called.
-var API_VERSION = 3;
+var API_VERSION = 4;
 function doPost(e) {
   var req; try { req = JSON.parse((e && e.postData && e.postData.contents) || '{}'); } catch (x) { req = {}; }
   return ContentService.createTextOutput(JSON.stringify(api_(req.fn, req.args))).setMimeType(ContentService.MimeType.JSON);
@@ -132,7 +132,11 @@ function doPost(e) {
 function jsonp_(p) {
   var args; try { args = JSON.parse(p.args || '[]'); } catch (x) { args = []; }
   var cb = /^[A-Za-z_$][\w$.]{0,60}$/.test(p.callback || '') ? p.callback : 'console.log';
-  return ContentService.createTextOutput(cb + '(' + JSON.stringify(api_(p.fn, args)) + ');')
+  // A retried request (same rid) gets the first answer back instead of running twice.
+  var cache = CacheService.getScriptCache(), key = /^[\w-]{8,40}$/.test(p.rid || '') ? 'rid_' + p.rid : null;
+  var body = key && cache.get(key);
+  if (!body) { body = JSON.stringify(api_(p.fn, args)); if (key && body.length < 90000) cache.put(key, body, 600); }
+  return ContentService.createTextOutput(cb + '(' + body + ');')
     .setMimeType(ContentService.MimeType.JAVASCRIPT);
 }
 function api_(fnName, args) {

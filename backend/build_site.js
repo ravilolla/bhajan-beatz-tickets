@@ -24,10 +24,28 @@ fs.writeFileSync(path.join(out, 'style.css'),
   fs.readFileSync(path.join(dir, 'Style.html'), 'utf8').replace(/<\/?style>/g, '').trim() + '\n');
 fs.writeFileSync(path.join(out, 'config.js'), 'window.BB_API = ' + JSON.stringify(API) + ';\n');
 fs.writeFileSync(path.join(out, 'api.js'), `// Stand-in for google.script.run that calls the Apps Script backend.
-// Uses JSONP (a <script> tag) so browsers' cross-site (CORS) rules never get in the way.
+// Uses fetch without cookies, falling back to JSONP (a <script> tag).
 (function () {
   var n = 0;
+  // Primary path: fetch with credentials omitted, so Google never sees the visitor's sign-in cookies
+  // (phones signed in to several Google accounts otherwise get Google's "unable to open the file" page).
   function call(fn, args, ok, fail) {
+    var rid = Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+    var url = window.BB_API + '?fn=' + encodeURIComponent(fn) + '&args=' + encodeURIComponent(JSON.stringify(args)) + '&rid=' + rid + '&callback=__bbcb';
+    if (!window.fetch) return jsonp(fn, args, ok, fail, rid);
+    var ctl = window.AbortController ? new AbortController() : null, t = setTimeout(function () { if (ctl) ctl.abort(); }, 25000);
+    fetch(url, { credentials: 'omit', cache: 'no-store', redirect: 'follow', signal: ctl ? ctl.signal : undefined })
+      .then(function (r) { return r.text(); })
+      .then(function (txt) {
+        clearTimeout(t);
+        txt = txt.trim(); var a = txt.indexOf('__bbcb('), b = txt.lastIndexOf(')');
+        if (a !== 0 || b < 0) throw new Error('bad');
+        var j = JSON.parse(txt.slice(7, b));
+        if (j && j.ok) { if (ok) ok(j.result); } else if (fail) fail(new Error((j && j.error) || 'Something went wrong.'));
+      })
+      .catch(function () { clearTimeout(t); jsonp(fn, args, ok, fail, rid); });
+  }
+  function jsonp(fn, args, ok, fail, rid) {
     var cb = '__bb' + Date.now() + '_' + (n++), done = false, s = document.createElement('script');
     function finish() { done = true; clearTimeout(t); try { delete window[cb]; } catch (e) { window[cb] = undefined; } s.remove(); }
     var t = setTimeout(function () {
@@ -39,7 +57,7 @@ fs.writeFileSync(path.join(out, 'api.js'), `// Stand-in for google.script.run th
       if (j && j.ok) { if (ok) ok(j.result); } else if (fail) fail(new Error((j && j.error) || 'Something went wrong.'));
     };
     s.onerror = function () { if (done) return; finish(); if (fail) fail(new Error('Could not reach the server. Please check your connection and try again.')); };
-    s.src = window.BB_API + '?fn=' + encodeURIComponent(fn) + '&args=' + encodeURIComponent(JSON.stringify(args)) + '&callback=' + cb;
+    s.src = window.BB_API + '?fn=' + encodeURIComponent(fn) + '&args=' + encodeURIComponent(JSON.stringify(args)) + '&rid=' + rid + '&callback=' + cb;
     document.head.appendChild(s);
   }
   function runner(ok, fail) {
@@ -61,7 +79,7 @@ fs.writeFileSync(path.join(out, 'check.html'), `<!DOCTYPE html><html><head><meta
 <script>
   document.getElementById('u').textContent = 'Backend: ' + window.BB_API;
   google.script.run.withSuccessHandler(function (v) {
-    document.getElementById('r').innerHTML = v >= 3 ? '<span class="pill ok">Connected</span> Backend version ' + v + '. Everything is wired up.'
+    document.getElementById('r').innerHTML = v >= 4 ? '<span class="pill ok">Connected</span> Backend version ' + v + '. Everything is wired up.'
       : '<span class="pill warn">Old backend</span> Version ' + v + '. Paste the latest Code.gs and deploy a New version.';
   }).withFailureHandler(function (e) {
     document.getElementById('r').innerHTML = '<span class="pill bad">Not connected</span> ';

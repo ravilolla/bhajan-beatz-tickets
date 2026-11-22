@@ -6,7 +6,7 @@
 <script>
   document.getElementById('u').textContent = 'Backend: ' + window.BB_API;
   google.script.run.withSuccessHandler(function (v) {
-    document.getElementById('r').innerHTML = v >= 3 ? '<span class="pill ok">Connected</span> Backend version ' + v + '. Everything is wired up.'
+    document.getElementById('r').innerHTML = v >= 4 ? '<span class="pill ok">Connected</span> Backend version ' + v + '. Everything is wired up.'
       : '<span class="pill warn">Old backend</span> Version ' + v + '. Paste the latest Code.gs and deploy a New version.';
   }).withFailureHandler(function (e) {
     document.getElementById('r').innerHTML = '<span class="pill bad">Not connected</span> ';

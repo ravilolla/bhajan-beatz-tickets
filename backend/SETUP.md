@@ -93,4 +93,4 @@ Google's own page (`/exec`) can show blank or "unable to open the file" for peop
 4. In `Code.gs`, set `PUBLIC_SITE_URL` to that link (with the trailing `/`), and deploy a **New version** again, so ticket emails and QR codes point to the site.
 
 Public link to share: `https://<github-user>.github.io/<repo>/`. Volunteers: `…/door.html`. You: `…/report.html`.
-If you change the event text, price or party size in `Code.gs`, rebuild the site and publish again.
+Price, party size, date, venue and 'presented by' text are read live from `Code.gs`: change them there and deploy a New version. No site rebuild needed.

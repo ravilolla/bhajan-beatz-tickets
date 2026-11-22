@@ -3,8 +3,10 @@
 <body><div class="wrap">
   <div class="brand">
     <img class="logo" src="<?= S.PUBLIC_SITE_URL ?>banner.jpg" alt="Bhajan Beatz · Bhajan Jamming &amp; Clubbing · First time in Danbury!">
-    <div class="when" id="evWhen"><?= S.EVENT_WHEN ?></div>
-    <div class="where"><span id="evWhere"><?= S.EVENT_WHERE ?></span> · <span id="evPrice"><?= priceLabel ?></span> · Registration required</div>
+    <div class="when"><span id="evWhen"><?= S.EVENT_WHEN ?></span>. Registration Required.</div>
+    <div class="extra" id="evExtra"><?= S.EVENT_EXTRA ?></div>
+    <div class="where" id="evPrice"><?= priceLabel ?></div>
+    <div class="policy" id="evPolicy"><?= S.REFUND_POLICY ?></div>
   </div>
 
   <div class="card" id="formCard">
@@ -148,7 +150,9 @@
   };
   // Live event details from the backend (price, date, venue), so Code.gs changes show without rebuilding the site.
   function applyEvent(ev) {
-    $('evWhen').textContent = ev.when; $('evWhere').textContent = ev.where; $('evPrice').textContent = ev.priceLabel; $('evBy').textContent = ev.presentedBy;
+    $('evWhen').textContent = ev.when; $('evPrice').textContent = ev.priceLabel; $('evBy').textContent = ev.presentedBy;
+    $('evExtra').textContent = ev.extra || ''; $('evExtra').style.display = ev.extra ? '' : 'none';
+    $('evPolicy').textContent = ev.policy || ''; $('evPolicy').style.display = ev.policy ? '' : 'none';
     var keep = +sel.value || 1;
     if (ev.maxParty !== MAXP) {
       MAXP = ev.maxParty; sel.innerHTML = '';

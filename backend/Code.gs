@@ -15,7 +15,8 @@
 // ===== SETTINGS: edit these =====
 var SETTINGS = {
   EVENT_NAME: 'Bhajan Beatz | Bhajan Jamming & Clubbing',
-  EVENT_WHEN: 'Sunday, December 27, 2026 · 4 PM – 8 PM, followed by dinner',
+  EVENT_WHEN: 'Sunday, December 27, 2026 · 4 PM – 8 PM',
+  EVENT_EXTRA: 'Served with Snacks, Chai & Delicious Dinner',   // extra line under the date ('' hides it)
   EVENT_WHERE: 'Sai Sannidhi, Danbury, CT',
   PRESENTED_BY: 'Presented by Sai Sannidhi, in collaboration with Sur Shakti Group',
   CAPACITY: 75,          // total seats when PRICE_TIERS is empty (with tiers, capacity = sum of tier seats)
@@ -38,7 +39,7 @@ var SETTINGS = {
   PAYPAL_ME: '',         // optional: your PayPal.me name, e.g. 'SaiSannidhi' for paypal.me/SaiSannidhi ('' hides PayPal)
   CASH_INFO: 'Cash can be handed to an organizer at Sai Sannidhi.',
   PAY_WITHIN_DAYS: 3,    // shown to people; unpaid holds are NOT released automatically
-  REFUND_POLICY: 'FILL IN: e.g. Full refund if you cancel by December 20.',
+  REFUND_POLICY: 'Cancellation Penalty - $100',   // shown on the registration page and in emails ('' hides it)
   SHEET_NAME: 'Registrations',
   // Public site (GitHub Pages) address, ending in '/'. When set, ticket links and QR codes point there.
   // Leave '' to use Google's own pages at the /exec link.
@@ -234,6 +235,7 @@ function register(form) {
 /** Event text the site shows, so changing SETTINGS + redeploying updates the site without a rebuild. */
 function eventInfo_() {
   return { when: SETTINGS.EVENT_WHEN, where: SETTINGS.EVENT_WHERE, presentedBy: SETTINGS.PRESENTED_BY,
+           extra: SETTINGS.EVENT_EXTRA || '', policy: SETTINGS.REFUND_POLICY || '',
            price: paidEvent_() ? seatPrice_(seatsUsed_(rows_()) + 1) : 0, maxParty: SETTINGS.MAX_PARTY,
            tiers: tiers_(), priceLabel: priceLabel_() };
 }
@@ -505,7 +507,7 @@ function sendTicketEmail_(r) {
     '<div style="background:#2a0b45;color:#ffd98a;padding:20px 24px">' +
     (logo ? '<img src="cid:logo" alt="Bhajan Beatz · Bhajan Jamming &amp; Clubbing" style="display:block;width:100%;max-width:472px;margin:0 0 12px">' : '<div style="font-size:13px;letter-spacing:2px;color:#ff8bd8">BHAJAN BEATZ</div>') +
     (logo ? '' : '<div style="font-size:20px;font-weight:bold;color:#fff">Bhajan Jamming &amp; Clubbing</div>') +
-    '<div style="margin-top:6px">' + esc(SETTINGS.EVENT_WHEN) + '<br>' + esc(SETTINGS.EVENT_WHERE) + '</div></div>' +
+    '<div style="margin-top:6px">' + esc(SETTINGS.EVENT_WHEN) + '<br>' + (SETTINGS.EVENT_EXTRA ? esc(SETTINGS.EVENT_EXTRA) + '<br>' : '') + esc(SETTINGS.EVENT_WHERE) + '</div></div>' +
     '<div style="padding:22px 24px;color:#222">' +
     '<p>Namaste ' + esc(firstName_(r.name)) + ',</p>' +
     (confirmed

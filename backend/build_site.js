@@ -15,8 +15,7 @@ const API = api.replace(/\/a\/macros\/[^/]+\/s\//, '/macros/s/').replace(/\/a\/[
 const ctx = {}; vm.createContext(ctx);
 vm.runInContext(fs.readFileSync(path.join(dir, 'Code.gs'), 'utf8') + '\n;this.__S = SETTINGS;', ctx);
 const S = ctx.__S;
-const price = Number(S.PRICE_PER_PERSON) || 0;
-const priceLabel = price > 0 ? '$' + price + ' per person (Zelle or cash)' : 'Free entry';
+const priceLabel = vm.runInContext('priceLabel_()', ctx);
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 fs.mkdirSync(out, { recursive: true });

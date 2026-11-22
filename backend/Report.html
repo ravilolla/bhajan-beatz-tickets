@@ -97,7 +97,7 @@
     $('moneyCard').style.display = 'block';
     $('mCol').textContent = money(r.collected); $('mDue').textContent = money(r.pendingAmount);
     $('mZel').textContent = money(r.collectedBy.Zelle || 0); $('mCash').textContent = money(r.collectedBy.Cash || 0);
-    $('mSub').textContent = money(r.price) + ' per person · ' + r.pendingSeats + ' seats held but unpaid (' + r.pendingRegs + ' registrations) · expected total ' + money(r.expected);
+    $('mSub').textContent = (r.tierFill || []).map(function (t) { return (t.price ? money(t.price) : 'Free') + ' tier: ' + t.taken + '/' + t.seats + ' taken'; }).join(' · ') + ' · ' + r.pendingSeats + ' seats held but unpaid (' + r.pendingRegs + ' registrations) · expected total ' + money(r.expected);
     google.script.run.withSuccessHandler(function (list) {
       var box = $('pending'); box.innerHTML = '';
       if (!list.length) { box.innerHTML = '<p style="color:var(--muted)">Nobody is waiting. 🎉</p>'; return; }

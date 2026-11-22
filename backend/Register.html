@@ -9,6 +9,7 @@
 
   <div class="card" id="formCard">
     <div class="seats" id="seats">Checking seats…<div class="bar"><i id="barFill" style="width:0"></i></div></div>
+    <div id="tierNow" style="text-align:center;color:var(--gold);font-weight:700;margin:-4px 0 6px"></div>
     <form id="f" novalidate>
       <label for="name">Full name</label>
       <input id="name" name="name" autocomplete="name" required maxlength="80">
@@ -45,8 +46,36 @@
   <p class="fine"><span id="evBy"><?= S.PRESENTED_BY ?></span><br><i>Music is the soul's language, and God is the soul's energy.</i></p>
 </div>
 <script>
-  var APP = <?= appUrl ?>, MAXP = <?= S.MAX_PARTY ?>, PRICE = <?= S.PRICE_PER_PERSON ?>, LABEL = PRICE > 0 ? 'Reserve my seats' : 'Get my free ticket';
-  function showTotal() { if (PRICE > 0) { var n = +sel.value; $('total').style.display = 'block'; $('total').textContent = 'Total: $' + (PRICE * n) + ' (' + n + ' x $' + PRICE + '), paid by Zelle or cash after you register'; } }
+  var APP = <?= appUrl ?>, MAXP = <?= S.MAX_PARTY ?>, TIERS = null, USED = 0, FULL = false, LABEL = 'Get my tickets';
+  // Same pricing rule as the backend: each seat is priced by its place in line.
+  function seatPrice(n) { var end = 0; for (var i = 0; i < TIERS.length; i++) { end += TIERS[i].seats; if (n <= end) return TIERS[i].price; } return TIERS[TIERS.length - 1].price; }
+  function quote(party) {
+    var total = 0, parts = {}, order = [];
+    for (var k = 1; k <= party; k++) { var p = seatPrice(USED + k); total += p; if (!(p in parts)) { parts[p] = 0; order.push(p); } parts[p]++; }
+    return { total: total, text: order.map(function (p) { return parts[p] + (p ? ' x $' + p : ' free'); }).join(' + ') };
+  }
+  function showTotal() {
+    if (!TIERS) return;
+    var n = +sel.value, q = quote(n), t = $('total');
+    t.style.display = 'block';
+    t.textContent = q.total > 0 ? 'Total: $' + q.total + ' (' + q.text + '), paid by Zelle or cash after you register'
+                                : 'Free! ' + (n > 1 ? n + ' free tickets' : '1 free ticket') + '. You still need to register to reserve your seat.';
+    LABEL = FULL ? 'Join the waitlist' : q.total > 0 ? 'Reserve my seats' : (n > 1 ? 'Get my free tickets' : 'Get my free ticket');
+    if (!$('go').disabled) $('go').textContent = LABEL;
+  }
+  function showTier() {
+    var el = $('tierNow'); if (!TIERS || FULL) { el.textContent = ''; return; }
+    var end = 0;
+    for (var i = 0; i < TIERS.length; i++) {
+      end += TIERS[i].seats;
+      if (USED < end) {
+        var left = end - USED, nxt = TIERS[i + 1];
+        el.textContent = 'Right now: ' + (TIERS[i].price ? '$' + TIERS[i].price + ' per person' : 'FREE tickets') + ' · ' + left + ' left at this price' +
+          (nxt ? ', then ' + (nxt.price ? '$' + nxt.price : 'free') : '');
+        return;
+      }
+    }
+  }
   var sel = document.getElementById('party');
   for (var i = 1; i <= MAXP; i++) { var o = document.createElement('option'); o.value = i; o.textContent = i === 1 ? '1 (just me)' : i; sel.appendChild(o); }
   function $(id) { return document.getElementById(id); }
@@ -55,13 +84,14 @@
 
   function loadSeats() {
     google.script.run.withSuccessHandler(function (a) {
+      USED = a.used; FULL = a.open && a.left <= 0;
       if (a.event) applyEvent(a.event);
+      showTier(); showTotal();
       var pct = Math.min(100, Math.round(a.used / a.capacity * 100));
       $('barFill').style.width = pct + '%';
       $('seats').firstChild.nodeValue = !a.open ? 'Registration is closed.' :
         a.left > 0 ? a.left + ' of ' + a.capacity + ' seats left' : 'Event is full: you can still join the waitlist';
       if (!a.open) $('go').disabled = true;
-      if (a.open && a.left <= 0) $('go').textContent = 'Join the waitlist';
     }).withFailureHandler(function () { $('seats').firstChild.nodeValue = ''; }).getAvailability();
   }
   $('go').textContent = LABEL; showTotal();
@@ -120,11 +150,7 @@
       for (var i = 1; i <= MAXP; i++) { var o = document.createElement('option'); o.value = i; o.textContent = i === 1 ? '1 (just me)' : i; sel.appendChild(o); }
       sel.value = Math.min(keep, MAXP);
     }
-    if (ev.price !== PRICE) {
-      PRICE = ev.price; LABEL = PRICE > 0 ? 'Reserve my seats' : 'Get my free ticket';
-      if (!$('go').disabled) $('go').textContent = LABEL;
-      $('total').style.display = 'none'; showTotal();
-    }
+    if (ev.tiers && ev.tiers.length) TIERS = ev.tiers;
   }
 </script>
 </body></html>

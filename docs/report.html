@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Bhajan Beatz · Report</title><meta name="robots" content="noindex"><link rel="stylesheet" href="style.css?v=mwsclmtw"><script src="config.js?v=mwsclmtw"></script><script src="api.js?v=mwsclmtw"></script>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Bhajan Beatz · Report</title><meta name="robots" content="noindex"><link rel="stylesheet" href="style.css?v=mwsdgbkc"><script src="config.js?v=mwsdgbkc"></script><script src="api.js?v=mwsdgbkc"></script>
 <style>
   .wrap { max-width:720px; }
   .stats { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:14px; }
@@ -97,7 +97,7 @@
     $('moneyCard').style.display = 'block';
     $('mCol').textContent = money(r.collected); $('mDue').textContent = money(r.pendingAmount);
     $('mZel').textContent = money(r.collectedBy.Zelle || 0); $('mCash').textContent = money(r.collectedBy.Cash || 0);
-    $('mSub').textContent = money(r.price) + ' per person · ' + r.pendingSeats + ' seats held but unpaid (' + r.pendingRegs + ' registrations) · expected total ' + money(r.expected);
+    $('mSub').textContent = (r.tierFill || []).map(function (t) { return (t.price ? money(t.price) : 'Free') + ' tier: ' + t.taken + '/' + t.seats + ' taken'; }).join(' · ') + ' · ' + r.pendingSeats + ' seats held but unpaid (' + r.pendingRegs + ' registrations) · expected total ' + money(r.expected);
     google.script.run.withSuccessHandler(function (list) {
       var box = $('pending'); box.innerHTML = '';
       if (!list.length) { box.innerHTML = '<p style="color:var(--muted)">Nobody is waiting. 🎉</p>'; return; }

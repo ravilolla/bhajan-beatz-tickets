@@ -18,13 +18,21 @@ var SETTINGS = {
   EVENT_WHEN: 'Sunday, December 27, 2026 · 4 PM – 8 PM, followed by dinner',
   EVENT_WHERE: 'Sai Sannidhi, Danbury, CT',
   PRESENTED_BY: 'Presented by Sai Sannidhi, in collaboration with Sur Shakti Group',
-  CAPACITY: 75,          // total seats (every person in a party counts as one seat)
+  CAPACITY: 75,          // total seats when PRICE_TIERS is empty (with tiers, capacity = sum of tier seats)
   MAX_PARTY: 5,          // most people one registration can bring
   REGISTRATION_OPEN: true,
   ORGANIZER_EMAIL: '',   // optional: shown on emails as reply-to
 
-  // ----- Ticket price. Set PRICE_PER_PERSON to 0 for a free event. -----
-  PRICE_PER_PERSON: 50,  // dollars per seat; a party of 3 owes 3 x this
+  // ----- Ticket price -----
+  // Tiers: seats are priced by their place in line. First 50 seats free, next 30 at $10, last 20 at $20.
+  // An order that crosses a tier line pays each seat at its own tier (e.g. 2 free + 2 x $10).
+  // Remove all tiers (PRICE_TIERS: []) to use one flat PRICE_PER_PERSON instead (0 = free event).
+  PRICE_TIERS: [
+    { seats: 50, price: 0 },
+    { seats: 30, price: 10 },
+    { seats: 20, price: 20 }
+  ],
+  PRICE_PER_PERSON: 50,  // only used when PRICE_TIERS is empty
   ZELLE_TO: 'FILL IN: Zelle email or phone',
   ZELLE_NAME: 'FILL IN: name the Zelle account shows',
   CASH_INFO: 'Cash can be handed to an organizer at Sai Sannidhi.',
@@ -42,11 +50,38 @@ var HEADERS = ['Ticket ID', 'Registered At', 'Name', 'Email', 'Phone', 'Party Si
 var COL = { id: 0, at: 1, name: 2, email: 3, phone: 4, party: 5, status: 6, inAt: 7, inCount: 8, notes: 9,
             due: 10, paid: 11, via: 12, paidAt: 13 };
 var PENDING = 'Pending payment';
-function paidEvent_() { return Number(SETTINGS.PRICE_PER_PERSON) > 0; }
+function tiers_() {
+  var t = (SETTINGS.PRICE_TIERS || []).filter(function (x) { return Number(x.seats) > 0; })
+    .map(function (x) { return { seats: Number(x.seats), price: Number(x.price) || 0 }; });
+  return t.length ? t : [{ seats: Number(SETTINGS.CAPACITY), price: Number(SETTINGS.PRICE_PER_PERSON) || 0 }];
+}
+function capacity_() { return tiers_().reduce(function (s, t) { return s + t.seats; }, 0); }
+/** Price of seat number n (1-based place in line). Past capacity (waitlist) uses the last tier's price. */
+function seatPrice_(n) {
+  var t = tiers_(), end = 0;
+  for (var i = 0; i < t.length; i++) { end += t[i].seats; if (n <= end) return t[i].price; }
+  return t[t.length - 1].price;
+}
+/** Total for `party` seats when `used` seats are already taken, plus a plain-words breakdown. */
+function quote_(used, party) {
+  var total = 0, parts = {}, order = [];
+  for (var k = 1; k <= party; k++) {
+    var p = seatPrice_(used + k); total += p;
+    if (!(p in parts)) { parts[p] = 0; order.push(p); } parts[p]++;
+  }
+  return { total: total, breakdown: order.map(function (p) { return parts[p] + (p ? ' x ' + money_(p) : ' free'); }).join(' + ') };
+}
+function paidEvent_() { return tiers_().some(function (t) { return t.price > 0; }); }
+function priceLabel_() {
+  var t = tiers_();
+  if (!paidEvent_()) return 'Free entry';
+  if (t.length === 1) return money_(t[0].price) + ' per person (Zelle or cash)';
+  return t.map(function (x, i) { return (i === 0 ? 'First ' : 'next ') + x.seats + (x.price ? ' at ' + money_(x.price) : ' free'); }).join(', ');
+}
 function money_(n) { return '$' + (Math.round(Number(n) * 100) / 100).toFixed(2).replace(/\.00$/, ''); }
 /** Payment details shown on the page and in emails. */
 function payInfo_() {
-  return { price: Number(SETTINGS.PRICE_PER_PERSON) || 0, zelleTo: SETTINGS.ZELLE_TO, zelleName: SETTINGS.ZELLE_NAME,
+  return { price: seatPrice_(seatsUsed_(rows_()) + 1), zelleTo: SETTINGS.ZELLE_TO, zelleName: SETTINGS.ZELLE_NAME,
            cash: SETTINGS.CASH_INFO, days: SETTINGS.PAY_WITHIN_DAYS, refund: SETTINGS.REFUND_POLICY };
 }
 
@@ -113,7 +148,7 @@ function render_(p) {
   else { tpl = HtmlService.createTemplateFromFile('Register'); view = 'Register'; }
   tpl.S = SETTINGS;
   tpl.appUrl = appUrl_();
-  tpl.priceLabel = paidEvent_() ? money_(SETTINGS.PRICE_PER_PERSON) + ' per person (Zelle or cash)' : 'Free entry';
+  tpl.priceLabel = priceLabel_();
   return tpl.evaluate()
     .setTitle('Bhajan Beatz · ' + view)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
@@ -157,7 +192,7 @@ function api_(fnName, args) {
 function getAvailability() {
   var rows = rows_();
   var used = seatsUsed_(rows);
-  return { capacity: SETTINGS.CAPACITY, used: used, left: Math.max(0, SETTINGS.CAPACITY - used),
+  return { capacity: capacity_(), used: used, left: Math.max(0, capacity_() - used),
            open: SETTINGS.REGISTRATION_OPEN, maxParty: SETTINGS.MAX_PARTY, pay: payInfo_(), event: eventInfo_() };
 }
 
@@ -177,11 +212,12 @@ function register(form) {
   try {
     var sh = sheet_(), rows = rows_();
     // Every registration is its own order with its own ticket ID, even from the same email or phone.
-    var left = SETTINGS.CAPACITY - seatsUsed_(rows);
-    var status = party <= left ? (paidEvent_() ? PENDING : 'Confirmed') : 'Waitlist';
+    var left = capacity_() - seatsUsed_(rows);
+    var q = quote_(seatsUsed_(rows), party);
+    var status = party <= left ? (q.total > 0 ? PENDING : 'Confirmed') : 'Waitlist';
     var id = newId_(rows);
-    var due = (Number(SETTINGS.PRICE_PER_PERSON) || 0) * party;
-    var row = [id, new Date(), name, email, "'" + phone, party, status, '', 0, '', due, 0, '', ''];
+    var due = q.total;
+    var row = [id, new Date(), name, email, "'" + phone, party, status, '', 0, q.total ? q.breakdown : '', due, 0, '', ''];
     sh.appendRow(row);
     SpreadsheetApp.flush();
     var rec = rowObj_(row); rec.phone = phone;
@@ -193,8 +229,8 @@ function register(form) {
 /** Event text the site shows, so changing SETTINGS + redeploying updates the site without a rebuild. */
 function eventInfo_() {
   return { when: SETTINGS.EVENT_WHEN, where: SETTINGS.EVENT_WHERE, presentedBy: SETTINGS.PRESENTED_BY,
-           price: paidEvent_() ? Number(SETTINGS.PRICE_PER_PERSON) : 0, maxParty: SETTINGS.MAX_PARTY,
-           priceLabel: paidEvent_() ? money_(SETTINGS.PRICE_PER_PERSON) + ' per person (Zelle or cash)' : 'Free entry' };
+           price: paidEvent_() ? seatPrice_(seatsUsed_(rows_()) + 1) : 0, maxParty: SETTINGS.MAX_PARTY,
+           tiers: tiers_(), priceLabel: priceLabel_() };
 }
 function getEventInfo() { return eventInfo_(); }
 
@@ -243,7 +279,7 @@ function checkIn(id, pin, count) {
 
 function doorStats(pin) {
   if (!pinOk_(pin)) throw new Error('Wrong door PIN.');
-  var rows = rows_(), s = { confirmed: 0, arrived: 0, waitlist: 0, capacity: SETTINGS.CAPACITY };
+  var rows = rows_(), s = { confirmed: 0, arrived: 0, waitlist: 0, capacity: capacity_() };
   rows.forEach(function (row) {
     var r = rowObj_(row);
     if (r.status === 'Confirmed') { s.confirmed += r.party; s.arrived += r.inCount; }
@@ -273,7 +309,7 @@ function markPaid(id, pin, via, amount) {
     if (!r) return { ok: false, message: 'No ticket found for ' + id };
     if (r.status === 'Cancelled') return { ok: false, message: 'This registration was cancelled.' };
     if (r.status === 'Confirmed' && r.paid >= r.due) return { ok: false, message: 'Already paid.', ticket: doorTicket_(r) };
-    if (r.status === 'Waitlist' && r.party > SETTINGS.CAPACITY - seatsUsed_(rows_()))
+    if (r.status === 'Waitlist' && r.party > capacity_() - seatsUsed_(rows_()))
       return { ok: false, message: 'No seats free for this waitlisted party.', ticket: doorTicket_(r) };
     var amt = amount === undefined || amount === '' || amount === null ? r.due - r.paid : Number(amount);
     if (!(amt >= 0)) throw new Error('Enter a valid amount.');
@@ -303,9 +339,9 @@ function reportData(pin) {
 }
 function report_() {
   var tz = Session.getScriptTimeZone(), rows = rows_().map(rowObj_);
-  var r = { capacity: SETTINGS.CAPACITY, registrations: 0, seats: 0, waitlistRegs: 0, waitlistSeats: 0,
+  var r = { capacity: capacity_(), registrations: 0, seats: 0, waitlistRegs: 0, waitlistSeats: 0,
             cancelledRegs: 0, arrivedSeats: 0, arrivedRegs: 0, partyMix: {}, byDay: {}, last24h: 0, recent: [],
-            paidEvent: paidEvent_(), price: Number(SETTINGS.PRICE_PER_PERSON) || 0,
+            paidEvent: paidEvent_(), price: 0, priceLabel: priceLabel_(), tiers: tiers_(), tierFill: [],
             pendingRegs: 0, pendingSeats: 0, pendingAmount: 0, collected: 0, collectedBy: {}, expected: 0 };
   var now = new Date().getTime();
   rows.forEach(function (x) {
@@ -323,6 +359,11 @@ function report_() {
     }
   });
   r.seatsLeft = Math.max(0, r.capacity - r.seats);
+  var start = 0;
+  r.tierFill = tiers_().map(function (t) {
+    var taken = Math.max(0, Math.min(t.seats, r.seats - start)); start += t.seats;
+    return { seats: t.seats, price: t.price, taken: taken };
+  });
   r.recent = rows.filter(function (x) { return x.at; })
     .sort(function (a, b) { return new Date(b.at) - new Date(a.at); }).slice(0, 10)
     .map(function (x) { return { name: x.name, party: x.party, status: x.status, at: Utilities.formatDate(new Date(x.at), tz, 'MMM d, h:mm a') }; });
@@ -368,7 +409,8 @@ function rowObj_(row, i) {
            phone: String(row[COL.phone]).replace(/^'/, ''), party: Number(row[COL.party]) || 1,
            status: String(row[COL.status] || 'Confirmed'), inAt: row[COL.inAt] || '',
            inCount: Number(row[COL.inCount]) || 0, rowNum: (i || 0) + 2,
-           due: Number(row[COL.due]) || 0, paid: Number(row[COL.paid]) || 0, via: String(row[COL.via] || '') };
+           due: Number(row[COL.due]) || 0, paid: Number(row[COL.paid]) || 0, via: String(row[COL.via] || ''),
+           notes: String(row[COL.notes] || '') };
 }
 function find_(id) {
   id = String(id || '').trim().toUpperCase();
@@ -468,7 +510,7 @@ function sendTicketEmail_(r) {
         '<p style="text-align:center"><a href="' + url + '" style="background:#c2187a;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none">Open my ticket</a></p>'
       : pending
       ? '<p>We are holding <b>' + r.party + (r.party > 1 ? ' seats' : ' seat') + '</b> for you. To confirm, please pay <b>' + money_(owed) + '</b>' +
-        ' (' + money_(SETTINGS.PRICE_PER_PERSON) + ' x ' + r.party + ') within ' + SETTINGS.PAY_WITHIN_DAYS + ' days.</p>' +
+        (r.notes ? ' (' + esc(r.notes) + ')' : '') + ' within ' + SETTINGS.PAY_WITHIN_DAYS + ' days.</p>' +
         '<div style="background:#f7f0fc;border-radius:10px;padding:14px 16px">' +
         '<p style="margin:0 0 8px"><b>Zelle:</b> send to <b>' + esc(SETTINGS.ZELLE_TO) + '</b> (' + esc(SETTINGS.ZELLE_NAME) + ')<br>' +
         'Put <b>' + esc(r.id) + '</b> in the Zelle memo so we can match your payment.</p>' +

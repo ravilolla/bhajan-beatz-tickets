@@ -71,20 +71,25 @@ fs.writeFileSync(path.join(out, 'api.js'), `// Stand-in for google.script.run th
 })();
 `);
 // Connection check page for troubleshooting.
+const V = Date.now().toString(36); // cache-buster so phones never keep an old api.js
 fs.writeFileSync(path.join(out, 'check.html'), `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bhajan Beatz · Connection check</title><meta name="robots" content="noindex"><link rel="stylesheet" href="style.css">
-<script src="config.js"></script><script src="api.js"></script></head><body><div class="wrap">
-<div class="brand"><div class="k">BHAJAN BEATZ</div><h1>Connection check</h1></div>
-<div class="card"><p id="r">Checking…</p><p class="fine" id="u" style="text-align:left;word-break:break-all"></p></div></div>
+<title>Bhajan Beatz · Connection check</title><meta name="robots" content="noindex"><link rel="stylesheet" href="style.css?v=${V}">
+<script src="config.js?v=${V}"></script></head><body><div class="wrap">
+<div class="brand"><div class="k">BHAJAN BEATZ</div><h1>Connection check</h1><div class="where">Site build ${V}</div></div>
+<div class="card"><p><b>Test A (direct)</b><br><span id="a">Checking…</span></p><p><b>Test B (script)</b><br><span id="b">Checking…</span></p>
+<p class="fine" id="u" style="text-align:left;word-break:break-all"></p></div></div>
 <script>
-  document.getElementById('u').textContent = 'Backend: ' + window.BB_API;
-  google.script.run.withSuccessHandler(function (v) {
-    document.getElementById('r').innerHTML = v >= 4 ? '<span class="pill ok">Connected</span> Backend version ' + v + '. Everything is wired up.'
-      : '<span class="pill warn">Old backend</span> Version ' + v + '. Paste the latest Code.gs and deploy a New version.';
-  }).withFailureHandler(function (e) {
-    document.getElementById('r').innerHTML = '<span class="pill bad">Not connected</span> ';
-    document.getElementById('r').appendChild(document.createTextNode(e.message + ' Most likely the latest Code.gs is not deployed yet (Deploy, Manage deployments, pencil, New version), or the backend link above is not your current /exec link.'));
-  }).apiVersion();
+  function $(i) { return document.getElementById(i); }
+  $('u').textContent = 'Backend: ' + window.BB_API + ' · ' + navigator.userAgent;
+  var url = window.BB_API + '?fn=apiVersion&args=%5B%5D&callback=__bbcb&rid=chk' + Date.now();
+  fetch(url, { credentials: 'omit', cache: 'no-store' }).then(function (r) {
+    return r.text().then(function (t) { $('a').textContent = (t.indexOf('__bbcb(') >= 0 ? 'OK ' : 'FAILED ') + 'HTTP ' + r.status + ' from ' + (r.url || '').split('?')[0].slice(0, 60) + ' : ' + t.slice(0, 140); });
+  }).catch(function (e) { $('a').textContent = 'FAILED ' + e.name + ': ' + e.message; });
+  window.__chk = function (j) { $('b').textContent = 'OK ' + JSON.stringify(j); };
+  var s = document.createElement('script'); s.src = window.BB_API + '?fn=apiVersion&args=%5B%5D&callback=__chk&rid=chs' + Date.now();
+  s.onerror = function () { $('b').textContent = 'FAILED (script could not load: Google returned an error or sign-in page)'; };
+  document.head.appendChild(s);
+  setTimeout(function () { if (/Checking/.test($('b').textContent)) $('b').textContent = 'FAILED (no answer in 20s)'; }, 20000);
 </script></body></html>
 `);
 fs.writeFileSync(path.join(out, '.nojekyll'), '');
@@ -95,7 +100,7 @@ for (const [src, [file, title]] of Object.entries(pages)) {
   let h = fs.readFileSync(path.join(dir, src + '.html'), 'utf8');
   h = h.replace('<base target="_top">', '<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">' +
                 '<title>Bhajan Beatz · ' + title + '</title>' + (src === 'Door' || src === 'Report' ? '<meta name="robots" content="noindex">' : ''))
-       .replace("<?!= include('Style'); ?>", '<link rel="stylesheet" href="style.css"><script src="config.js"></script><script src="api.js"></script>')
+       .replace("<?!= include('Style'); ?>", '<link rel="stylesheet" href="style.css?v=' + V + '"><script src="config.js?v=' + V + '"></script><script src="api.js?v=' + V + '"></script>')
        .replace(/<\?= S\.(\w+) \?>/g, (_, k) => typeof S[k] === 'number' ? String(S[k]) : esc(S[k]))
        .replace(/<\?= priceLabel \?>/g, esc(priceLabel))
        .replace(/<\?= appUrl \?>/g, "(location.href.replace(/[^\\/]*([?#].*)?$/, '') + 'ticket.html')")

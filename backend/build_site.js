@@ -74,9 +74,10 @@ fs.writeFileSync(path.join(out, 'api.js'), `// Stand-in for google.script.run th
 const V = Date.now().toString(36); // cache-buster so phones never keep an old api.js
 fs.writeFileSync(path.join(out, 'check.html'), `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Bhajan Beatz · Connection check</title><meta name="robots" content="noindex"><link rel="stylesheet" href="style.css?v=${V}">
-<script src="config.js?v=${V}"></script></head><body><div class="wrap">
+<script src="config.js?v=${V}"></script><script src="api.js?v=${V}"></script></head><body><div class="wrap">
 <div class="brand"><div class="k">BHAJAN BEATZ</div><h1>Connection check</h1><div class="where">Site build ${V}</div></div>
 <div class="card"><p><b>Test A (direct)</b><br><span id="a">Checking…</span></p><p><b>Test B (script)</b><br><span id="b">Checking…</span></p>
+<p><b>Backend</b><br><span id="v">Checking…</span></p>
 <p class="fine" id="u" style="text-align:left;word-break:break-all"></p></div></div>
 <script>
   function $(i) { return document.getElementById(i); }
@@ -90,6 +91,11 @@ fs.writeFileSync(path.join(out, 'check.html'), `<!DOCTYPE html><html><head><meta
   s.onerror = function () { $('b').textContent = 'FAILED (script could not load: Google returned an error or sign-in page)'; };
   document.head.appendChild(s);
   setTimeout(function () { if (/Checking/.test($('b').textContent)) $('b').textContent = 'FAILED (no answer in 20s)'; }, 20000);
+  google.script.run.withSuccessHandler(function (v) {
+    var el = $('v');
+    if (v < 5) { el.textContent = 'Backend version ' + v + ': OLD. Paste the latest Code.gs, then Deploy, Manage deployments, pencil, New version.'; return; }
+    google.script.run.withSuccessHandler(function (ev) { el.textContent = 'Backend version ' + v + ' (up to date). Price it reports: ' + ev.priceLabel + ' · max party ' + ev.maxParty + ' · ' + ev.when; }).getEventInfo();
+  }).withFailureHandler(function (e) { $('v').textContent = 'Could not read backend version: ' + e.message; }).apiVersion();
 </script></body></html>
 `);
 fs.writeFileSync(path.join(out, '.nojekyll'), '');

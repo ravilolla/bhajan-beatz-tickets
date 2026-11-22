@@ -94,3 +94,9 @@ Google's own page (`/exec`) can show blank or "unable to open the file" for peop
 
 Public link to share: `https://<github-user>.github.io/<repo>/`. Volunteers: `…/door.html`. You: `…/report.html`.
 Price, party size, date, venue and 'presented by' text are read live from `Code.gs`: change them there and deploy a New version. No site rebuild needed.
+
+## Custom domain: bjtickets.saisannidhiusa.org
+- DNS (Cloudflare): `CNAME bjtickets → ravilolla.github.io`, **DNS only** (grey cloud).
+- GitHub: repo **Settings → Pages → Custom domain** = `bjtickets.saisannidhiusa.org` → Save; once the certificate is ready, tick **Enforce HTTPS**. The `docs/CNAME` file keeps this setting on every publish.
+- `Code.gs`: `PUBLIC_SITE_URL: 'https://bjtickets.saisannidhiusa.org/'` (ticket links, QR codes and the email banner use it).
+- Public link: https://bjtickets.saisannidhiusa.org/ · Volunteers: …/door.html · You: …/report.html · Check: …/check.html

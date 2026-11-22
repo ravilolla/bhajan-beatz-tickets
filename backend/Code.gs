@@ -33,7 +33,7 @@ var SETTINGS = {
   SHEET_NAME: 'Registrations',
   // Public site (GitHub Pages) address, ending in '/'. When set, ticket links and QR codes point there.
   // Leave '' to use Google's own pages at the /exec link.
-  PUBLIC_SITE_URL: ''
+  PUBLIC_SITE_URL: 'https://ravilolla.github.io/bhakti-beats-tickets/'
 };
 // The door PIN is NOT kept in code. Set it once by running setDoorPin() from the editor.
 

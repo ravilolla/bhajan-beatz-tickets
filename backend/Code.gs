@@ -1,5 +1,5 @@
 /**
- * Bhakti Beats | Bhajan Jamming & Clubbing — registration + QR entry tickets (free or paid by Zelle/cash)
+ * Bhajan Beatz | Bhajan Jamming & Clubbing — registration + QR entry tickets (free or paid by Zelle/cash)
  * Runs as a Google Apps Script web app attached to a Google Sheet. No servers, no cost.
  *
  * Pages (all at the same web app URL):
@@ -14,7 +14,7 @@
 
 // ===== SETTINGS: edit these =====
 var SETTINGS = {
-  EVENT_NAME: 'Bhakti Beats | Bhajan Jamming & Clubbing',
+  EVENT_NAME: 'Bhajan Beatz | Bhajan Jamming & Clubbing',
   EVENT_WHEN: 'Sunday, December 27, 2026 · 4 PM – 8 PM, followed by dinner',
   EVENT_WHERE: 'Sai Sannidhi, Danbury, CT',
   PRESENTED_BY: 'Presented by Sai Sannidhi, in collaboration with Sur Shakti Group',
@@ -72,21 +72,21 @@ function doGet(e) {
     // Simplest possible page: no template, no styles, no scripts. If this is blank too, the browser
     // or network is blocking Google's page frame (googleusercontent.com), not our code.
     var mode = p.frame === 'deny' ? HtmlService.XFrameOptionsMode.DEFAULT : HtmlService.XFrameOptionsMode.ALLOWALL;
-    return HtmlService.createHtmlOutput('<h1 style="font-family:Arial;color:#c2187a">Hello from Bhakti Beats</h1><p style="font-family:Arial">If you can read this, the page frame works.</p>')
-      .setTitle('Bhakti Beats test').setXFrameOptionsMode(mode);
+    return HtmlService.createHtmlOutput('<h1 style="font-family:Arial;color:#c2187a">Hello from Bhajan Beatz</h1><p style="font-family:Arial">If you can read this, the page frame works.</p>')
+      .setTitle('Bhajan Beatz test').setXFrameOptionsMode(mode);
   }
   try { return render_(p); }
   catch (err) {
     // Show the problem instead of a blank page.
     return HtmlService.createHtmlOutput('<div style="font:16px Arial;padding:24px;max-width:600px">' +
-      '<h2>Bhakti Beats portal: setup problem</h2><p style="color:#b00">' + String(err).replace(/</g, '&lt;') + '</p>' +
-      '<p>Open this same link with <b>?page=ping</b> at the end for a full check.</p></div>').setTitle('Bhakti Beats · setup problem');
+      '<h2>Bhajan Beatz portal: setup problem</h2><p style="color:#b00">' + String(err).replace(/</g, '&lt;') + '</p>' +
+      '<p>Open this same link with <b>?page=ping</b> at the end for a full check.</p></div>').setTitle('Bhajan Beatz · setup problem');
   }
 }
 
 /** Plain-text self check: <url>?page=ping. Lists what's missing. Safe to open; reveals no attendee data. */
 function diagnose_() {
-  var out = ['Bhakti Beats portal self-check', 'Time: ' + new Date()];
+  var out = ['Bhajan Beatz portal self-check', 'Time: ' + new Date()];
   ['Style', 'Register', 'Ticket', 'Door', 'Report'].forEach(function (f) {
     try { HtmlService.createHtmlOutputFromFile(f); out.push('OK   HTML file "' + f + '"'); }
     catch (err) { out.push('MISSING  HTML file "' + f + '" (create it with + > HTML, name exactly ' + f + ')'); }
@@ -115,7 +115,7 @@ function render_(p) {
   tpl.appUrl = appUrl_();
   tpl.priceLabel = paidEvent_() ? money_(SETTINGS.PRICE_PER_PERSON) + ' per person (Zelle or cash)' : 'Free entry';
   return tpl.evaluate()
-    .setTitle('Bhakti Beats · ' + view)
+    .setTitle('Bhajan Beatz · ' + view)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
@@ -319,7 +319,7 @@ function enableDailySummary() {
 }
 function sendDailySummary() {
   var r = report_(), to = SETTINGS.ORGANIZER_EMAIL || Session.getEffectiveUser().getEmail();
-  var body = 'Bhakti Beats registrations\n\n' +
+  var body = 'Bhajan Beatz registrations\n\n' +
     'Seats confirmed: ' + r.seats + ' of ' + r.capacity + ' (' + r.seatsLeft + ' left)\n' +
     'Registrations: ' + r.registrations + '\n' +
     'New seats in last 24h: ' + r.last24h + '\n' +
@@ -328,7 +328,7 @@ function sendDailySummary() {
     (r.paidEvent ? '\nPaid so far: ' + money_(r.collected) + '\nUnpaid holds: ' + r.pendingSeats + ' seats, ' + money_(r.pendingAmount) + ' due (' + r.pendingRegs + ' registrations)\n' : '') +
     (r.arrivedSeats ? 'Checked in: ' + r.arrivedSeats + '\n' : '') +
     '\nFull report: ' + appUrl_() + '?page=report';
-  MailApp.sendEmail(to, 'Bhakti Beats: ' + r.seats + '/' + r.capacity + ' seats registered', body);
+  MailApp.sendEmail(to, 'Bhajan Beatz: ' + r.seats + '/' + r.capacity + ' seats registered', body);
 }
 
 // ---------- Internals ----------
@@ -422,7 +422,7 @@ function sendTicketEmail_(r) {
   var esc = function (s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
   var html =
     '<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;border-radius:14px;overflow:hidden;border:1px solid #e5d4f5">' +
-    '<div style="background:#2a0b45;color:#ffd98a;padding:20px 24px"><div style="font-size:13px;letter-spacing:2px;color:#ff8bd8">BHAKTI BEATS</div>' +
+    '<div style="background:#2a0b45;color:#ffd98a;padding:20px 24px"><div style="font-size:13px;letter-spacing:2px;color:#ff8bd8">BHAJAN BEATZ</div>' +
     '<div style="font-size:20px;font-weight:bold;color:#fff">Bhajan Jamming &amp; Clubbing</div>' +
     '<div style="margin-top:6px">' + esc(SETTINGS.EVENT_WHEN) + '<br>' + esc(SETTINGS.EVENT_WHERE) + '</div></div>' +
     '<div style="padding:22px 24px;color:#222">' +
@@ -444,7 +444,7 @@ function sendTicketEmail_(r) {
       : '<p>The event is full right now, so you are on the <b>waitlist</b> for a party of ' + r.party + '. We will email you if seats open up.</p>') +
     '<p style="color:#666;font-size:13px">Can\'t make it? Just reply to this email so we can give your seat to someone else.</p>' +
     '<p style="color:#666;font-size:13px">' + esc(SETTINGS.PRESENTED_BY) + '<br><i>Music is the soul\'s language, and God is the soul\'s energy.</i></p></div></div>';
-  var opts = { htmlBody: html, name: 'Bhakti Beats · Sai Sannidhi' };
+  var opts = { htmlBody: html, name: 'Bhajan Beatz · Sai Sannidhi' };
   if (qr) opts.inlineImages = { qr: qr };
   if (SETTINGS.ORGANIZER_EMAIL) opts.replyTo = SETTINGS.ORGANIZER_EMAIL;
   MailApp.sendEmail(r.email, subject, (pending ? 'Please pay ' + money_(owed) + ' by Zelle to ' + SETTINGS.ZELLE_TO + ' (memo ' + r.id + ') or cash. ' : '') + 'Ticket: ' + url, opts);
@@ -468,7 +468,7 @@ function markSelectedRowPaid_(via) {
 function markSelectedPaidZelle() { markSelectedRowPaid_('Zelle'); }
 function markSelectedPaidCash() { markSelectedRowPaid_('Cash'); }
 function onOpen() {
-  SpreadsheetApp.getUi().createMenu('Bhakti Beats')
+  SpreadsheetApp.getUi().createMenu('Bhajan Beatz')
     .addItem('Mark selected row PAID (Zelle) + email ticket', 'markSelectedPaidZelle')
     .addItem('Mark selected row PAID (Cash) + email ticket', 'markSelectedPaidCash')
     .addSeparator()

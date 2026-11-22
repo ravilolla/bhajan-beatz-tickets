@@ -1,4 +1,4 @@
-# Bhakti Beats ticket portal: setup (about 15 minutes)
+# Bhajan Beatz ticket portal: setup (about 15 minutes)
 
 Registration (free or paid by Zelle/cash), QR entry tickets by email, a 75-seat cap with automatic waitlist, and phone check-in at the door.
 It runs as a Google Apps Script web app on your own Google account. Data lives in a Google Sheet you own. Hosting cost: $0. No card processor and no fees: people pay you directly.
@@ -12,7 +12,7 @@ It runs as a Google Apps Script web app on your own Google account. Data lives i
 - **Google Sheet**: every registration and check-in time, so you can sort, export, or edit.
 
 ## Steps
-1. Go to sheets.google.com and create a blank sheet named **Bhakti Beats Registrations**. (Tip: use a Sai Sannidhi Gmail account rather than a personal one, since emails are sent from that account.)
+1. Go to sheets.google.com and create a blank sheet named **Bhajan Beatz Registrations**. (Tip: use a Sai Sannidhi Gmail account rather than a personal one, since emails are sent from that account.)
 2. In the sheet: **Extensions → Apps Script**.
 3. Replace the contents of `Code.gs` with this folder's `Code.gs`.
 4. Click **+ → HTML** five times and create files named exactly `Style`, `Register`, `Ticket`, `Door`, `Report` (no `.html`; Apps Script adds it). Paste the matching file contents into each.
@@ -35,10 +35,10 @@ After step 7 you have one URL like `https://script.google.com/macros/s/AKfy...lo
 
 The door and report pages need the PIN, so a leaked link alone can't do anything, but keep them out of public posts anyway.
 
-**Making the public link nicer:** the raw Google URL is long. Shorten it with a free shortener such as bit.ly or tinyurl.com (for example `tinyurl.com/BhaktiBeats2026`) and put that in posts. For the flyer, add a QR code of the same link.
+**Making the public link nicer:** the raw Google URL is long. Shorten it with a free shortener such as bit.ly or tinyurl.com (for example `tinyurl.com/BhajanBeatz2026`) and put that in posts. For the flyer, add a QR code of the same link.
 
 **Ready-to-post text:**
-> 🎶 Bhakti Beats | Bhajan Jamming & Clubbing 🎶
+> 🎶 Bhajan Beatz | Bhajan Jamming & Clubbing 🎶
 > First time in Danbury! Live bhajans, tabla, DJ beats and dancing, followed by dinner.
 > 📅 Sunday, December 27, 2026 · 4 to 8 PM
 > 📍 Sai Sannidhi, Danbury, CT
@@ -64,8 +64,8 @@ If you edit code later: **Deploy → Manage deployments → Edit (pencil) → Ve
 - **Payments**: once or twice a day, open your Zelle activity and the report page side by side. Each Zelle memo should have a ticket ID (e.g. `BB-7K2Q9X`). Tap **Zelle** next to that person. For cash, tap **Cash**. Partial payments can be entered from the sheet: type the amount in **Amount Paid**, and the seat stays held until the full amount is in.
 - **Unpaid holds**: nothing is released automatically. If someone hasn't paid after `PAY_WITHIN_DAYS`, change their Status to `Cancelled` to free the seats (and promote someone from the waitlist).
 - **Someone cancels**: change their Status cell to `Cancelled`. The seat frees up immediately.
-- **Promote from waitlist**: change Status from `Waitlist` to `Pending payment` (paid event) or `Confirmed` (free event), select that row, then use the sheet menu **Bhakti Beats → Re-send email to selected row**. They'll get payment instructions or their ticket.
-- **Sheet menu**: **Bhakti Beats → Mark selected row PAID (Zelle/Cash)** does the same as the report buttons.
+- **Promote from waitlist**: change Status from `Waitlist` to `Pending payment` (paid event) or `Confirmed` (free event), select that row, then use the sheet menu **Bhajan Beatz → Re-send email to selected row**. They'll get payment instructions or their ticket.
+- **Sheet menu**: **Bhajan Beatz → Mark selected row PAID (Zelle/Cash)** does the same as the report buttons.
 - **At the door**: 1–2 volunteers with phones. Scan QR → tap the link → **Check in**. Green "Admit ✓" means good; amber "Already checked in" means the code was used before.
 
 ## Good to know

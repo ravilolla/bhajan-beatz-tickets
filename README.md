@@ -1,7 +1,7 @@
-# Bhakti Beats tickets
+# Bhajan Beatz tickets
 
 Registration, QR entry tickets, payments (Zelle/cash) and door check-in for
-**Bhakti Beats | Bhajan Jamming & Clubbing**, Sunday, December 27, 2026, Sai Sannidhi, Danbury CT.
+**Bhajan Beatz | Bhajan Jamming & Clubbing**, Sunday, December 27, 2026, Sai Sannidhi, Danbury CT.
 
 - `docs/`: the public site, served by GitHub Pages at https://ravilolla.github.io/bhakti-beats-tickets/
   - `index.html` registration (share this) · `ticket.html` attendee ticket · `door.html` volunteers · `report.html` organizers

@@ -72,9 +72,9 @@ fs.writeFileSync(path.join(out, 'api.js'), `// Stand-in for google.script.run th
 `);
 // Connection check page for troubleshooting.
 fs.writeFileSync(path.join(out, 'check.html'), `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bhakti Beats · Connection check</title><meta name="robots" content="noindex"><link rel="stylesheet" href="style.css">
+<title>Bhajan Beatz · Connection check</title><meta name="robots" content="noindex"><link rel="stylesheet" href="style.css">
 <script src="config.js"></script><script src="api.js"></script></head><body><div class="wrap">
-<div class="brand"><div class="k">BHAKTI BEATS</div><h1>Connection check</h1></div>
+<div class="brand"><div class="k">BHAJAN BEATZ</div><h1>Connection check</h1></div>
 <div class="card"><p id="r">Checking…</p><p class="fine" id="u" style="text-align:left;word-break:break-all"></p></div></div>
 <script>
   document.getElementById('u').textContent = 'Backend: ' + window.BB_API;
@@ -94,7 +94,7 @@ const pages = { Register: ['index.html', 'Register'], Ticket: ['ticket.html', 'Y
 for (const [src, [file, title]] of Object.entries(pages)) {
   let h = fs.readFileSync(path.join(dir, src + '.html'), 'utf8');
   h = h.replace('<base target="_top">', '<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">' +
-                '<title>Bhakti Beats · ' + title + '</title>' + (src === 'Door' || src === 'Report' ? '<meta name="robots" content="noindex">' : ''))
+                '<title>Bhajan Beatz · ' + title + '</title>' + (src === 'Door' || src === 'Report' ? '<meta name="robots" content="noindex">' : ''))
        .replace("<?!= include('Style'); ?>", '<link rel="stylesheet" href="style.css"><script src="config.js"></script><script src="api.js"></script>')
        .replace(/<\?= S\.(\w+) \?>/g, (_, k) => typeof S[k] === 'number' ? String(S[k]) : esc(S[k]))
        .replace(/<\?= priceLabel \?>/g, esc(priceLabel))

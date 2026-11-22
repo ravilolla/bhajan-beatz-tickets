@@ -168,6 +168,7 @@ function register(form) {
   var party = parseInt(form && form.party, 10);
   if (!name) throw new Error('Please enter your name.');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Please enter a valid email address.');
+  if (phone.replace(/\D/g, '').length < 10) throw new Error('Please enter your mobile number (at least 10 digits).');
   if (!(party >= 1 && party <= SETTINGS.MAX_PARTY)) throw new Error('Party size must be 1 to ' + SETTINGS.MAX_PARTY + '.');
   if (!SETTINGS.REGISTRATION_OPEN) throw new Error('Registration is closed.');
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Bhajan Beatz · Register</title><link rel="stylesheet" href="style.css?v=mwrge5gp"><script src="config.js?v=mwrge5gp"></script><script src="api.js?v=mwrge5gp"></script></head>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Bhajan Beatz · Register</title><link rel="stylesheet" href="style.css?v=mwrgidk5"><script src="config.js?v=mwrgidk5"></script><script src="api.js?v=mwrgidk5"></script></head>
 <body><div class="wrap">
   <div class="brand">
     <img class="logo" src="https://ravilolla.github.io/bhajan-beatz-tickets/banner.jpg" alt="Bhajan Beatz · Bhajan Jamming &amp; Clubbing · First time in Danbury!">
@@ -14,8 +14,8 @@
       <input id="name" name="name" autocomplete="name" required maxlength="80">
       <label for="email">Email (your ticket is sent here)</label>
       <input id="email" name="email" type="email" autocomplete="email" required maxlength="120">
-      <label for="phone">Phone (optional)</label>
-      <input id="phone" name="phone" type="tel" autocomplete="tel" maxlength="30">
+      <label for="phone">Mobile phone</label>
+      <input id="phone" name="phone" type="tel" autocomplete="tel" maxlength="30" required placeholder="e.g. 203-555-0123">
       <label for="party">How many people, including you?</label>
       <select id="party" name="party"></select>
       <p id="total" style="margin:10px 0 0;color:var(--gold);font-weight:600;display:none"></p>
@@ -61,6 +61,7 @@
     var data = { name: $('name').value, email: $('email').value, phone: $('phone').value, party: sel.value };
     if (!data.name.trim()) return showMsg('Please enter your name.', 'err');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())) return showMsg('Please enter a valid email address.', 'err');
+    if (data.phone.replace(/\D/g, '').length < 10) return showMsg('Please enter your mobile number (at least 10 digits).', 'err');
     $('go').disabled = true; $('go').textContent = 'Saving…'; $('msg').className = 'msg';
     google.script.run.withSuccessHandler(function (res) {
       var t = res.ticket, ok = t.status === 'Confirmed', pend = t.status === 'Pending payment';

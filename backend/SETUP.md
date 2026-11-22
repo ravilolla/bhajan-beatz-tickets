@@ -4,7 +4,7 @@ Registration (free or paid by Zelle/cash), QR entry tickets by email, a 75-seat 
 It runs as a Google Apps Script web app on your own Google account. Data lives in a Google Sheet you own. Hosting cost: $0. No card processor and no fees: people pay you directly.
 
 ## What you get
-- **Registration page**: name, email, phone (optional), party size 1–5. Shows "X of 75 seats left". When full, new sign-ups go to a waitlist automatically. Same email twice = ticket re-sent, no double booking.
+- **Registration page**: name, email, mobile phone (required), party size 1–5. Shows "X of 75 seats left". When full, new sign-ups go to a waitlist automatically. Same email twice = ticket re-sent, no double booking.
 - **Ticket email**: QR code + ticket ID (e.g. `BB-7K2Q9X`) + "Open my ticket" link. The ticket page can be printed or saved as PDF.
 - **Door check-in**: volunteers scan the QR with their normal phone camera, which opens the ticket with a **Check in** button (after a one-time door PIN). Handles partial parties ("2 of 4 arrived") and warns on re-use. A Door Desk page shows live counts and a search by name/email/ID for people without their phone.
 - **Paid tickets ($50 per person, Zelle or cash)**: registering *holds* the seats as **Pending payment** and shows/emails the amount, your Zelle details, and their ticket ID to put in the Zelle memo. When you see the money, tap **Zelle** or **Cash** next to their name on the report page (or use the sheet menu). That confirms them and emails the QR ticket automatically. At the door, an unpaid guest can pay cash and a volunteer taps **Took $X cash**, then checks them in.

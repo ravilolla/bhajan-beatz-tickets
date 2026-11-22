@@ -416,14 +416,14 @@ function qrBlob_(text) {
 function logoBlob_() {
   if (!SETTINGS.PUBLIC_SITE_URL) return null;
   try {
-    var cache = CacheService.getScriptCache(), b64 = cache.get('logo_b64');
+    var cache = CacheService.getScriptCache(), b64 = cache.get('banner_b64');
     if (!b64) {
-      var res = UrlFetchApp.fetch(SETTINGS.PUBLIC_SITE_URL + 'logo.jpg', { muteHttpExceptions: true });
+      var res = UrlFetchApp.fetch(SETTINGS.PUBLIC_SITE_URL + 'banner.jpg', { muteHttpExceptions: true });
       if (res.getResponseCode() !== 200) return null;
       b64 = Utilities.base64Encode(res.getContent());
-      if (b64.length < 95000) cache.put('logo_b64', b64, 21600);
+      if (b64.length < 95000) cache.put('banner_b64', b64, 21600);
     }
-    return Utilities.newBlob(Utilities.base64Decode(b64), 'image/jpeg', 'logo.jpg');
+    return Utilities.newBlob(Utilities.base64Decode(b64), 'image/jpeg', 'banner.jpg');
   } catch (err) { Logger.log('Logo fetch failed: ' + err); return null; }
 }
 
@@ -439,8 +439,8 @@ function sendTicketEmail_(r) {
   var html =
     '<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;border-radius:14px;overflow:hidden;border:1px solid #e5d4f5">' +
     '<div style="background:#2a0b45;color:#ffd98a;padding:20px 24px">' +
-    (logo ? '<img src="cid:logo" alt="Bhajan Beatz" style="display:block;width:100%;max-width:472px;border-radius:10px;margin:0 0 12px">' : '<div style="font-size:13px;letter-spacing:2px;color:#ff8bd8">BHAJAN BEATZ</div>') +
-    '<div style="font-size:20px;font-weight:bold;color:#fff">Bhajan Jamming &amp; Clubbing</div>' +
+    (logo ? '<img src="cid:logo" alt="Bhajan Beatz · Bhajan Jamming &amp; Clubbing" style="display:block;width:100%;max-width:472px;margin:0 0 12px">' : '<div style="font-size:13px;letter-spacing:2px;color:#ff8bd8">BHAJAN BEATZ</div>') +
+    (logo ? '' : '<div style="font-size:20px;font-weight:bold;color:#fff">Bhajan Jamming &amp; Clubbing</div>') +
     '<div style="margin-top:6px">' + esc(SETTINGS.EVENT_WHEN) + '<br>' + esc(SETTINGS.EVENT_WHERE) + '</div></div>' +
     '<div style="padding:22px 24px;color:#222">' +
     '<p>Namaste ' + esc(firstName_(r.name)) + ',</p>' +

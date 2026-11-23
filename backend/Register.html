@@ -9,6 +9,14 @@
     <div class="policy" id="evPolicy"><?= S.REFUND_POLICY ?></div>
   </div>
 
+  <button type="button" class="promoBtn" id="promoBtn" aria-label="Watch the 30-second promo video">
+    <img src="<?= S.PUBLIC_SITE_URL ?>promo.jpg" alt=""><span><b>&#9654; Watch the promo</b><br><small>30 seconds · sound on</small></span>
+  </button>
+  <div class="promoBox" id="promoBox" hidden>
+    <video id="promoVid" controls playsinline preload="none" poster="<?= S.PUBLIC_SITE_URL ?>promo.jpg"><source src="<?= S.PUBLIC_SITE_URL ?>promo.mp4" type="video/mp4"></video>
+    <button type="button" class="promoClose" id="promoClose" aria-label="Close video">&#10005; Close</button>
+  </div>
+
   <div class="card" id="formCard">
     <div class="seats" id="seats">Checking seats…<div class="bar"><i id="barFill" style="width:0"></i></div></div>
     <div id="tierNow" style="text-align:center;color:var(--gold);font-weight:700;margin:-4px 0 6px"></div>
@@ -148,6 +156,12 @@
       .withFailureHandler(function (e) { b.disabled = false; m.className = 'msg err'; m.textContent = String(e.message || e).replace(/^Error:\s*/, ''); })
       .resendTickets($('lostEmail').value);
   };
+  // Promo video: opens full screen with sound on tap, so it never pushes the form down.
+  $('promoBtn').onclick = function () { $('promoBox').hidden = false; var v = $('promoVid'); v.currentTime = 0; var p = v.play(); if (p && p.catch) p.catch(function () {}); };
+  function closePromo() { var v = $('promoVid'); v.pause(); $('promoBox').hidden = true; }
+  $('promoClose').onclick = closePromo;
+  $('promoBox').onclick = function (e) { if (e.target === this) closePromo(); };
+  $('promoVid').onended = closePromo;
   // Live event details from the backend (price, date, venue), so Code.gs changes show without rebuilding the site.
   function applyEvent(ev) {
     $('evWhen').textContent = ev.when; $('evPrice').textContent = ev.priceLabel; $('evBy').textContent = ev.presentedBy;

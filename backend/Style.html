@@ -13,6 +13,14 @@
   .brand .extra { color:var(--ink); font-size:15px; font-style:italic; margin:2px 0; }
   .brand .tiers { color:var(--gold); font-size:clamp(16px,4.2vw,20px); font-weight:800; margin:6px 0 2px; }
   .brand .policy { color:var(--pink); font-size:13px; font-weight:700; margin-top:4px; }
+  .promoBtn { display:flex; align-items:center; gap:14px; width:100%; margin:0 0 16px; padding:10px; text-align:left; font-size:16px; font-weight:400;
+              background:var(--card); border:1px solid var(--line); border-radius:16px; color:var(--ink); }
+  .promoBtn img { width:64px; height:114px; object-fit:cover; border-radius:10px; flex:none; }
+  .promoBtn b { color:var(--gold); font-size:18px; } .promoBtn small { color:var(--muted); }
+  .promoBox { position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.92); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:12px; }
+  .promoBox[hidden] { display:none; }
+  .promoBox video { max-width:100%; max-height:calc(100vh - 90px); border-radius:12px; background:#000; }
+  .promoClose { width:auto; margin-top:12px; padding:10px 22px; font-size:16px; }
   .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:20px; box-shadow:0 10px 30px rgba(0,0,0,.35); }
   label { display:block; font-size:14px; color:var(--muted); margin:14px 0 6px; }
   input, select { width:100%; padding:12px; font-size:16px; border-radius:10px; border:1px solid var(--line); background:#1d0833; color:var(--ink); }
@@ -35,5 +43,5 @@
   .pill.bad { background:rgba(255,93,108,.18); color:var(--bad); }
   .center { text-align:center; }
   a { color:var(--gold); }
-  @media print { body { background:#fff; color:#000; } .card { box-shadow:none; border-color:#ccc; background:#fff; } .noprint { display:none !important; } .brand .logo { box-shadow:none; max-width:360px; } .brand .k,.brand .when { color:#000; } }
+  @media print { body { background:#fff; color:#000; } .card { box-shadow:none; border-color:#ccc; background:#fff; } .noprint, .promoBtn { display:none !important; } .brand .logo { box-shadow:none; max-width:360px; } .brand .k,.brand .when { color:#000; } }
 </style>

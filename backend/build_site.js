@@ -4,7 +4,7 @@
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const dir = __dirname;
 const api = process.argv[2];
-const out = path.resolve(process.argv[3] || path.join(dir, '..', 'docs'));
+const out = path.resolve(process.argv[3] || path.join(dir, 'site'));
 if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(api || '')) {
   console.error('Pass the web app URL ending in /exec, e.g. node build_site.js https://script.google.com/macros/s/XXXX/exec');
   process.exit(1);
@@ -101,7 +101,7 @@ fs.writeFileSync(path.join(out, '.nojekyll'), '');
 // Custom domain for GitHub Pages, taken from PUBLIC_SITE_URL when it isn't a github.io address.
 const host = (String(S.PUBLIC_SITE_URL || '').match(/^https:\/\/([^/]+)\//) || [])[1];
 if (host && !/\.github\.io$/.test(host)) fs.writeFileSync(path.join(out, 'CNAME'), host + '\n');
-for (const img of ['logo.jpg', 'banner.jpg']) if (fs.existsSync(path.join(dir, img))) fs.copyFileSync(path.join(dir, img), path.join(out, img));
+for (const img of ['logo.jpg', 'banner.jpg', 'promo.jpg', 'promo.mp4']) if (fs.existsSync(path.join(dir, img))) fs.copyFileSync(path.join(dir, img), path.join(out, img));
 
 const pages = { Register: ['index.html', 'Register'], Ticket: ['ticket.html', 'Your ticket'],
                 Door: ['door.html', 'Door check-in'], Report: ['report.html', 'Report'] };

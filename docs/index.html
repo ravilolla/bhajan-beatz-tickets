@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Bhajan Beatz · Register</title><link rel="stylesheet" href="style.css?v=mwtgwf46"><script src="config.js?v=mwtgwf46"></script><script src="api.js?v=mwtgwf46"></script></head>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Bhajan Beatz · Register</title><link rel="stylesheet" href="style.css?v=mwthmqhu"><script src="config.js?v=mwthmqhu"></script><script src="api.js?v=mwthmqhu"></script></head>
 <body><div class="wrap">
   <div class="brand">
     <img class="logo" src="https://bjtickets.saisannidhiusa.org/banner.jpg" alt="Bhajan Beatz · Bhajan Jamming &amp; Clubbing · First time in Danbury!">
@@ -7,6 +7,14 @@
     <div class="extra" id="evExtra">Served with Snacks, Chai &amp; Delicious Dinner</div>
     <div class="tiers" id="evPrice">First 50 free, next 30 at $10, next 20 at $20</div>
     <div class="policy" id="evPolicy">Cancellation Penalty - $100</div>
+  </div>
+
+  <button type="button" class="promoBtn" id="promoBtn" aria-label="Watch the 30-second promo video">
+    <img src="https://bjtickets.saisannidhiusa.org/promo.jpg" alt=""><span><b>&#9654; Watch the promo</b><br><small>30 seconds · sound on</small></span>
+  </button>
+  <div class="promoBox" id="promoBox" hidden>
+    <video id="promoVid" controls playsinline preload="none" poster="https://bjtickets.saisannidhiusa.org/promo.jpg"><source src="https://bjtickets.saisannidhiusa.org/promo.mp4" type="video/mp4"></video>
+    <button type="button" class="promoClose" id="promoClose" aria-label="Close video">&#10005; Close</button>
   </div>
 
   <div class="card" id="formCard">
@@ -148,6 +156,12 @@
       .withFailureHandler(function (e) { b.disabled = false; m.className = 'msg err'; m.textContent = String(e.message || e).replace(/^Error:\s*/, ''); })
       .resendTickets($('lostEmail').value);
   };
+  // Promo video: opens full screen with sound on tap, so it never pushes the form down.
+  $('promoBtn').onclick = function () { $('promoBox').hidden = false; var v = $('promoVid'); v.currentTime = 0; var p = v.play(); if (p && p.catch) p.catch(function () {}); };
+  function closePromo() { var v = $('promoVid'); v.pause(); $('promoBox').hidden = true; }
+  $('promoClose').onclick = closePromo;
+  $('promoBox').onclick = function (e) { if (e.target === this) closePromo(); };
+  $('promoVid').onended = closePromo;
   // Live event details from the backend (price, date, venue), so Code.gs changes show without rebuilding the site.
   function applyEvent(ev) {
     $('evWhen').textContent = ev.when; $('evPrice').textContent = ev.priceLabel; $('evBy').textContent = ev.presentedBy;

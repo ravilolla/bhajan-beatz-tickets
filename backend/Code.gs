@@ -18,7 +18,7 @@ var SETTINGS = {
   EVENT_WHEN: 'Sunday, December 27, 2026 · 4 PM – 8 PM',
   EVENT_EXTRA: 'Served with Snacks, Chai & Delicious Dinner',   // extra line under the date ('' hides it)
   EVENT_WHERE: 'Sai Sannidhi, Danbury, CT',
-  PRESENTED_BY: 'Presented by Sai Sannidhi, in collaboration with Sur Shakti Group',
+  PRESENTED_BY: 'Presented by Sai Sannidhi',
   CAPACITY: 75,          // total seats when PRICE_TIERS is empty (with tiers, capacity = sum of tier seats)
   MAX_PARTY: 5,          // most people one registration can bring
   REGISTRATION_OPEN: true,

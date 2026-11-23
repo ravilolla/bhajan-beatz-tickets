@@ -43,7 +43,7 @@ The door and report pages need the PIN, so a leaked link alone can't do anything
 > 📅 Sunday, December 27, 2026 · 4 to 8 PM
 > 📍 Sai Sannidhi, Danbury, CT
 > Tickets $50 per person (Zelle or cash). Seats are limited to 75. Reserve yours: [your link]
-> Presented by Sai Sannidhi, in collaboration with Sur Shakti Group.
+> Presented by Sai Sannidhi.
 
 If you edit code later: **Deploy → Manage deployments → Edit (pencil) → Version: New version → Deploy**. The URL stays the same.
 

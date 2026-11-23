@@ -25,12 +25,11 @@ var SETTINGS = {
   ORGANIZER_EMAIL: '',   // optional: shown on emails as reply-to
 
   // ----- Ticket price -----
-  // Tiers: seats are priced by their place in line. First 50 seats free, next 30 at $10, last 20 at $20.
-  // An order that crosses a tier line pays each seat at its own tier (e.g. 2 free + 2 x $10).
+  // Tiers: seats are priced by their place in line. First 80 seats free, last 20 at $20.
+  // An order that crosses a tier line pays each seat at its own tier (e.g. 2 free + 2 x $20).
   // Remove all tiers (PRICE_TIERS: []) to use one flat PRICE_PER_PERSON instead (0 = free event).
   PRICE_TIERS: [
-    { seats: 50, price: 0 },
-    { seats: 30, price: 10 },
+    { seats: 80, price: 0 },
     { seats: 20, price: 20 }
   ],
   PRICE_PER_PERSON: 50,  // only used when PRICE_TIERS is empty

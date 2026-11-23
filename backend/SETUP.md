@@ -102,7 +102,7 @@ Price, party size, date, venue and 'presented by' text are read live from `Code.
 - Public link: https://bjtickets.saisannidhiusa.org/ · Volunteers: …/door.html · You: …/report.html · Check: …/check.html
 
 ## Tiered pricing (PRICE_TIERS in Code.gs)
-Seats are priced by their place in line: by default the first 50 are free, the next 30 are $10 and the last 20 are $20 (capacity = 100).
+Seats are priced by their place in line: by default the first 80 are free and the last 20 are $20 (capacity = 100).
 - An order that crosses a tier line pays each seat at its own tier, e.g. a family of 4 when 2 free seats are left pays 2 free + 2 x $10 = $20.
 - Fully free orders are confirmed immediately and get their QR ticket by email. Orders with anything to pay go to Pending payment (Zelle/cash) as before.
 - An order's price is locked when it is placed. If someone cancels, the next registrant gets the cheapest open seat.

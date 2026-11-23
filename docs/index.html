@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Bhajan Beatz · Register</title><link rel="stylesheet" href="style.css?v=mwthmqhu"><script src="config.js?v=mwthmqhu"></script><script src="api.js?v=mwthmqhu"></script></head>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Bhajan Beatz · Register</title><link rel="stylesheet" href="style.css?v=mwthra5n"><script src="config.js?v=mwthra5n"></script><script src="api.js?v=mwthra5n"></script></head>
 <body><div class="wrap">
   <div class="brand">
     <img class="logo" src="https://bjtickets.saisannidhiusa.org/banner.jpg" alt="Bhajan Beatz · Bhajan Jamming &amp; Clubbing · First time in Danbury!">
@@ -9,9 +9,19 @@
     <div class="policy" id="evPolicy">Cancellation Penalty - $100</div>
   </div>
 
-  <button type="button" class="promoBtn" id="promoBtn" aria-label="Watch the 30-second promo video">
-    <img src="https://bjtickets.saisannidhiusa.org/promo.jpg" alt=""><span><b>&#9654; Watch the promo</b><br><small>30 seconds · sound on</small></span>
-  </button>
+  <div class="mediaRow">
+    <button type="button" class="promoBtn" id="promoBtn" aria-label="Watch the 30-second promo video">
+      <img src="https://bjtickets.saisannidhiusa.org/promo.jpg" alt=""><span><b>&#9654; Watch the promo</b><br><small>30 sec · sound on</small></span>
+    </button>
+    <button type="button" class="promoBtn" id="flyerBtn" aria-label="View the event flyer">
+      <img src="https://bjtickets.saisannidhiusa.org/flyer_thumb.jpg" alt=""><span><b>View the flyer</b><br><small>Tap to open · save &amp; share</small></span>
+    </button>
+  </div>
+  <div class="promoBox" id="flyerBox" hidden>
+    <img id="flyerImg" alt="Bhajan Beatz event flyer" data-src="https://bjtickets.saisannidhiusa.org/flyer.jpg">
+    <div style="display:flex;gap:10px"><a class="promoClose" id="flyerSave" href="https://bjtickets.saisannidhiusa.org/flyer.jpg" download="Bhajan_Beatz_Flyer.jpg" target="_blank" rel="noopener">&#11015; Save</a>
+    <button type="button" class="promoClose" id="flyerClose" aria-label="Close flyer">&#10005; Close</button></div>
+  </div>
   <div class="promoBox" id="promoBox" hidden>
     <video id="promoVid" controls playsinline preload="none" poster="https://bjtickets.saisannidhiusa.org/promo.jpg"><source src="https://bjtickets.saisannidhiusa.org/promo.mp4" type="video/mp4"></video>
     <button type="button" class="promoClose" id="promoClose" aria-label="Close video">&#10005; Close</button>
@@ -162,6 +172,9 @@
   $('promoClose').onclick = closePromo;
   $('promoBox').onclick = function (e) { if (e.target === this) closePromo(); };
   $('promoVid').onended = closePromo;
+  $('flyerBtn').onclick = function () { var i = $('flyerImg'); if (!i.src) i.src = i.getAttribute('data-src'); $('flyerBox').hidden = false; };
+  $('flyerClose').onclick = function () { $('flyerBox').hidden = true; };
+  $('flyerBox').onclick = function (e) { if (e.target === this || e.target === $('flyerImg')) this.hidden = true; };
   // Live event details from the backend (price, date, venue), so Code.gs changes show without rebuilding the site.
   function applyEvent(ev) {
     $('evWhen').textContent = ev.when; $('evPrice').textContent = ev.priceLabel; $('evBy').textContent = ev.presentedBy;

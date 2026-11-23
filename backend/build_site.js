@@ -101,7 +101,7 @@ fs.writeFileSync(path.join(out, '.nojekyll'), '');
 // Custom domain for GitHub Pages, taken from PUBLIC_SITE_URL when it isn't a github.io address.
 const host = (String(S.PUBLIC_SITE_URL || '').match(/^https:\/\/([^/]+)\//) || [])[1];
 if (host && !/\.github\.io$/.test(host)) fs.writeFileSync(path.join(out, 'CNAME'), host + '\n');
-for (const img of ['logo.jpg', 'banner.jpg', 'promo.jpg', 'promo.mp4']) if (fs.existsSync(path.join(dir, img))) fs.copyFileSync(path.join(dir, img), path.join(out, img));
+for (const img of ['logo.jpg', 'banner.jpg', 'promo.jpg', 'promo.mp4', 'flyer.jpg', 'flyer_thumb.jpg']) if (fs.existsSync(path.join(dir, img))) fs.copyFileSync(path.join(dir, img), path.join(out, img));
 
 const pages = { Register: ['index.html', 'Register'], Ticket: ['ticket.html', 'Your ticket'],
                 Door: ['door.html', 'Door check-in'], Report: ['report.html', 'Report'] };

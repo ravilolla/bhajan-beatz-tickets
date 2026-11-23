@@ -32,6 +32,8 @@ var SETTINGS = {
     { seats: 80, price: 0 },
     { seats: 20, price: 20 }
   ],
+  // Optional wording for the price line on the page ('' = built from the tiers, e.g. "First 80 free, next 20 at $20").
+  PRICE_LABEL: 'On popular demand, we are making the next 30 seats FREE too! 🎉 Last 20 seats at $20.',
   PRICE_PER_PERSON: 50,  // only used when PRICE_TIERS is empty
   ZELLE_TO: 'FILL IN: Zelle email or phone',
   ZELLE_NAME: 'FILL IN: name the Zelle account shows',
@@ -74,6 +76,7 @@ function quote_(used, party) {
 }
 function paidEvent_() { return tiers_().some(function (t) { return t.price > 0; }); }
 function priceLabel_() {
+  if (SETTINGS.PRICE_LABEL) return SETTINGS.PRICE_LABEL;
   var t = tiers_();
   if (!paidEvent_()) return 'Free entry';
   if (t.length === 1) return money_(t[0].price) + ' per person (Zelle or cash)';

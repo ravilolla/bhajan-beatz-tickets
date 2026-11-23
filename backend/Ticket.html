@@ -96,6 +96,6 @@
     }).checkIn(TID, getPin(), $('cnt').value);
   }
   $('checkBtn').onclick = checkInNow;
-  google.script.run.withSuccessHandler(function (ev) { $('evWhen').textContent = ev.when; $('evWhere').textContent = ev.where; $('evExtra').textContent = ev.extra || ''; $('evExtra').style.display = ev.extra ? '' : 'none'; }).getEventInfo();
+  google.script.run.withSuccessHandler(function (ev) { $('evWhen').textContent = ev.when; $('evWhere').textContent = ev.where; if ('extra' in ev) { $('evExtra').textContent = ev.extra; $('evExtra').style.display = ev.extra ? '' : 'none'; } }).getEventInfo();
 </script>
 </body></html>

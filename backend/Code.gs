@@ -25,15 +25,14 @@ var SETTINGS = {
   ORGANIZER_EMAIL: '',   // optional: shown on emails as reply-to
 
   // ----- Ticket price -----
-  // Tiers: seats are priced by their place in line. First 80 seats free, last 20 at $20.
+  // Tiers: seats are priced by their place in line. All 100 seats free (Nov 24).
   // An order that crosses a tier line pays each seat at its own tier (e.g. 2 free + 2 x $20).
   // Remove all tiers (PRICE_TIERS: []) to use one flat PRICE_PER_PERSON instead (0 = free event).
   PRICE_TIERS: [
-    { seats: 80, price: 0 },
-    { seats: 20, price: 20 }
+    { seats: 100, price: 0 }
   ],
   // Optional wording for the price line on the page ('' = built from the tiers, e.g. "First 80 free, next 20 at $20").
-  PRICE_LABEL: 'On popular demand, we are making the next 30 seats FREE too! 🎉 Last 20 seats at $20.',
+  PRICE_LABEL: 'Overwhelming response: 80 seats gone in a day! So ALL 100 seats are now FREE 🎉 Grab one of the last few!',
   PRICE_PER_PERSON: 50,  // only used when PRICE_TIERS is empty
   ZELLE_TO: 'FILL IN: Zelle email or phone',
   ZELLE_NAME: 'FILL IN: name the Zelle account shows',

@@ -7,7 +7,7 @@
     <div class="k">ENTRY TICKET</div>
     <div class="when" id="evWhen"><?= S.EVENT_WHEN ?></div>
     <div class="extra" id="evExtra"><?= S.EVENT_EXTRA ?></div>
-    <div class="where" id="evWhere"><?= S.EVENT_WHERE ?></div>
+    <div class="venue">&#128205; <a id="evWhere" href="https://www.google.com/maps/search/?api=1&amp;query=24+Clapboard+Ridge+Rd,+Danbury,+CT" target="_blank" rel="noopener"><?= S.EVENT_WHERE ?></a></div>
   </div>
   <div class="card center" id="card"><p>Loading ticket…</p></div>
 
@@ -96,6 +96,6 @@
     }).checkIn(TID, getPin(), $('cnt').value);
   }
   $('checkBtn').onclick = checkInNow;
-  google.script.run.withSuccessHandler(function (ev) { $('evWhen').textContent = ev.when; $('evWhere').textContent = ev.where; if ('extra' in ev) { $('evExtra').textContent = ev.extra; $('evExtra').style.display = ev.extra ? '' : 'none'; } }).getEventInfo();
+  google.script.run.withSuccessHandler(function (ev) { $('evWhen').textContent = ev.when; $('evWhere').textContent = ev.where; $('evWhere').href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(ev.where); if ('extra' in ev) { $('evExtra').textContent = ev.extra; $('evExtra').style.display = ev.extra ? '' : 'none'; } }).getEventInfo();
 </script>
 </body></html>

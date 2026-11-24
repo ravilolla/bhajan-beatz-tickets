@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Bhajan Beatz · Your ticket</title><link rel="stylesheet" href="style.css?v=mwu5bcz3"><script src="config.js?v=mwu5bcz3"></script><script src="api.js?v=mwu5bcz3"></script>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Bhajan Beatz · Your ticket</title><link rel="stylesheet" href="style.css?v=mwuvrles"><script src="config.js?v=mwuvrles"></script><script src="api.js?v=mwuvrles"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script></head>
 <body><div class="wrap">
   <div class="brand">
@@ -7,7 +7,7 @@
     <div class="k">ENTRY TICKET</div>
     <div class="when" id="evWhen">Sunday, December 27, 2026 · 4 PM – 8 PM</div>
     <div class="extra" id="evExtra">Served with Snacks, Chai &amp; Delicious Dinner</div>
-    <div class="where" id="evWhere">Sai Sannidhi, Danbury, CT</div>
+    <div class="venue">&#128205; <a id="evWhere" href="https://www.google.com/maps/search/?api=1&amp;query=24+Clapboard+Ridge+Rd,+Danbury,+CT" target="_blank" rel="noopener">UUCD, 24 Clapboard Ridge Rd, Danbury, CT</a></div>
   </div>
   <div class="card center" id="card"><p>Loading ticket…</p></div>
 
@@ -96,6 +96,6 @@
     }).checkIn(TID, getPin(), $('cnt').value);
   }
   $('checkBtn').onclick = checkInNow;
-  google.script.run.withSuccessHandler(function (ev) { $('evWhen').textContent = ev.when; $('evWhere').textContent = ev.where; if ('extra' in ev) { $('evExtra').textContent = ev.extra; $('evExtra').style.display = ev.extra ? '' : 'none'; } }).getEventInfo();
+  google.script.run.withSuccessHandler(function (ev) { $('evWhen').textContent = ev.when; $('evWhere').textContent = ev.where; $('evWhere').href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(ev.where); if ('extra' in ev) { $('evExtra').textContent = ev.extra; $('evExtra').style.display = ev.extra ? '' : 'none'; } }).getEventInfo();
 </script>
 </body></html>

@@ -17,7 +17,7 @@ var SETTINGS = {
   EVENT_NAME: 'Bhajan Beatz | Bhajan Jamming & Clubbing',
   EVENT_WHEN: 'Sunday, December 27, 2026 · 4 PM – 8 PM',
   EVENT_EXTRA: 'Served with Snacks, Chai & Delicious Dinner',   // extra line under the date ('' hides it)
-  EVENT_WHERE: 'Sai Sannidhi, Danbury, CT',
+  EVENT_WHERE: 'UUCD, 24 Clapboard Ridge Rd, Danbury, CT',
   PRESENTED_BY: 'Presented by Sai Sannidhi',
   CAPACITY: 75,          // total seats when PRICE_TIERS is empty (with tiers, capacity = sum of tier seats)
   MAX_PARTY: 5,          // most people one registration can bring
@@ -508,7 +508,7 @@ function sendTicketEmail_(r) {
     '<div style="background:#2a0b45;color:#ffd98a;padding:20px 24px">' +
     (logo ? '<img src="cid:logo" alt="Bhajan Beatz · Bhajan Jamming &amp; Clubbing" style="display:block;width:100%;max-width:472px;margin:0 0 12px">' : '<div style="font-size:13px;letter-spacing:2px;color:#ff8bd8">BHAJAN BEATZ</div>') +
     (logo ? '' : '<div style="font-size:20px;font-weight:bold;color:#fff">Bhajan Jamming &amp; Clubbing</div>') +
-    '<div style="margin-top:6px">' + esc(SETTINGS.EVENT_WHEN) + '<br>' + (SETTINGS.EVENT_EXTRA ? esc(SETTINGS.EVENT_EXTRA) + '<br>' : '') + esc(SETTINGS.EVENT_WHERE) + '</div></div>' +
+    '<div style="margin-top:6px">' + esc(SETTINGS.EVENT_WHEN) + '<br>' + (SETTINGS.EVENT_EXTRA ? esc(SETTINGS.EVENT_EXTRA) + '<br>' : '') + '&#128205; <a href="https://www.google.com/maps/search/?api=1&amp;query=' + encodeURIComponent(SETTINGS.EVENT_WHERE) + '" style="color:#ffd98a">' + esc(SETTINGS.EVENT_WHERE) + '</a></div></div>' +
     '<div style="padding:22px 24px;color:#222">' +
     '<p>Namaste ' + esc(firstName_(r.name)) + ',</p>' +
     (confirmed

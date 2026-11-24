@@ -41,7 +41,7 @@ The door and report pages need the PIN, so a leaked link alone can't do anything
 > 🎶 Bhajan Beatz | Bhajan Jamming & Clubbing 🎶
 > First time in Danbury! Live bhajans, tabla, DJ beats and dancing, followed by dinner.
 > 📅 Sunday, December 27, 2026 · 4 to 8 PM
-> 📍 Sai Sannidhi, Danbury, CT
+> 📍 UUCD, 24 Clapboard Ridge Rd, Danbury, CT
 > Tickets $50 per person (Zelle or cash). Seats are limited to 75. Reserve yours: [your link]
 > Presented by Sai Sannidhi.
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Bhajan Beatz · Register</title><link rel="stylesheet" href="style.css?v=mwuvv61x"><script src="config.js?v=mwuvv61x"></script><script src="api.js?v=mwuvv61x"></script></head>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Bhajan Beatz · Register</title><link rel="stylesheet" href="style.css?v=mwv2rahz"><script src="config.js?v=mwv2rahz"></script><script src="api.js?v=mwv2rahz"></script></head>
 <body><div class="wrap">
   <div class="brand">
     <img class="logo" src="https://bjtickets.saisannidhiusa.org/banner.jpg" alt="Bhajan Beatz · Bhajan Jamming &amp; Clubbing · First time in Danbury!">
@@ -26,6 +26,16 @@
   <div class="promoBox" id="promoBox" hidden>
     <video id="promoVid" controls playsinline preload="none" poster="https://bjtickets.saisannidhiusa.org/promo.jpg"><source src="https://bjtickets.saisannidhiusa.org/promo.mp4" type="video/mp4"></video>
     <button type="button" class="promoClose" id="promoClose" aria-label="Close video">&#10005; Close</button>
+  </div>
+
+  <div class="card center" id="fullCard" style="display:none">
+    <div class="hf">HOUSEFULL</div>
+    <h2 style="margin:6px 0 8px">All 100 seats are taken! &#128591;</h2>
+    <p>Thank you, Danbury, for the amazing love. We can't wait to see you on December 27th.</p>
+    <p style="color:var(--muted);font-size:14px">Already registered? Your QR ticket is in your email. Can't find it? Use <b>Resend my tickets</b> below.<br>
+      Plans changed? Please reply to your ticket email so someone on the waitlist gets your seat.</p>
+    <button type="button" id="wlBtn">Join the waitlist</button>
+    <p class="fine" id="wlNote" style="margin-top:8px">We'll email you right away if a seat opens up.</p>
   </div>
 
   <div class="card" id="formCard">
@@ -79,7 +89,7 @@
     if (!TIERS) return;
     var n = +sel.value, q = quote(n), t = $('total');
     t.style.display = 'block';
-    t.textContent = q.total > 0 ? 'Total: $' + q.total + ' (' + q.text + '), paid by Zelle or cash after you register'
+    t.textContent = FULL ? 'The event is full. Joining the waitlist does not reserve a seat: we\'ll email you if one opens up.' : q.total > 0 ? 'Total: $' + q.total + ' (' + q.text + '), paid by Zelle or cash after you register'
                                 : 'Free! ' + (n > 1 ? n + ' free tickets' : '1 free ticket') + '. You still need to register to reserve your seat.';
     LABEL = FULL ? 'Join the waitlist' : q.total > 0 ? 'Reserve my seats' : (n > 1 ? 'Get my free tickets' : 'Get my free ticket');
     if (!$('go').disabled) $('go').textContent = LABEL;
@@ -107,6 +117,7 @@
     google.script.run.withSuccessHandler(function (a) {
       USED = a.used; FULL = a.open && a.left <= 0;
       if (a.event) applyEvent(a.event);
+      if (FULL || !a.open) housefull(a.open);
       showTier(); showTotal();
       var pct = Math.min(100, Math.round(a.used / a.capacity * 100));
       $('barFill').style.width = pct + '%';
@@ -115,6 +126,16 @@
       if (!a.open) $('go').disabled = true;
     }).withFailureHandler(function () { $('seats').firstChild.nodeValue = ''; }).getAvailability();
   }
+  // Sold out: a warm thank-you card instead of the form. The waitlist form opens only on request.
+  var WL = false;
+  function housefull(open) {
+    $('evPrice').textContent = 'HOUSEFULL! Thank you, Danbury \uD83D\uDE4F';
+    $('tierNow').textContent = '';
+    if (WL) return;
+    $('formCard').style.display = 'none'; $('fullCard').style.display = 'block';
+    $('wlBtn').style.display = $('wlNote').style.display = open ? '' : 'none';
+  }
+  $('wlBtn').onclick = function () { WL = true; $('fullCard').style.display = 'none'; $('formCard').style.display = 'block'; $('name').focus(); };
   $('go').textContent = LABEL; showTotal();
   loadSeats();
 

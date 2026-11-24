@@ -23,7 +23,7 @@
   .promoBox img { max-width:100%; max-height:calc(100vh - 90px); border-radius:12px; }
   .promoBox video { max-width:100%; max-height:calc(100vh - 90px); border-radius:12px; background:#000; }
   .promoClose { width:auto; margin-top:12px; padding:10px 22px; font-size:16px; font-weight:700; border-radius:12px; color:#fff; text-decoration:none; background:linear-gradient(90deg,var(--pink2),var(--pink)); }
-  .hf { display:inline-block; padding:6px 18px; border-radius:999px; font-weight:900; letter-spacing:4px; font-size:20px; color:#1a0630; background:linear-gradient(90deg,var(--gold),var(--pink)); }
+  .hf { display:inline-block; padding:6px 16px; border-radius:999px; font-weight:900; letter-spacing:2px; font-size:clamp(16px,4.6vw,22px); white-space:nowrap; color:#1a0630; background:linear-gradient(90deg,var(--gold),var(--pink)); }
   .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:20px; box-shadow:0 10px 30px rgba(0,0,0,.35); }
   label { display:block; font-size:14px; color:var(--muted); margin:14px 0 6px; }
   input, select { width:100%; padding:12px; font-size:16px; border-radius:10px; border:1px solid var(--line); background:#1d0833; color:var(--ink); }

@@ -29,12 +29,17 @@
   </div>
 
   <div class="card center" id="fullCard" style="display:none">
-    <div class="hf">HOUSEFULL</div>
-    <h2 style="margin:6px 0 8px">All 100 seats are taken! &#128591;</h2>
-    <p>Thank you, Danbury, for the amazing love. We can't wait to see you on December 27th.</p>
-    <p style="color:var(--muted);font-size:14px">Already registered? Your QR ticket is in your email. Can't find it? Use <b>Resend my tickets</b> below.<br>
-      Plans changed? Please reply to your ticket email so someone on the waitlist gets your seat.</p>
-    <button type="button" id="wlBtn">Join the waitlist</button>
+    <div class="hf">&#127881; SHOW HOUSEFULL &#127881;</div>
+    <h2 style="margin:10px 0 6px;font-size:24px">Sold out in just 2 days,<br>a whole month before the show!</h2>
+    <p style="margin:0 0 4px">All 100 seats are taken. Thank you, Danbury, for the incredible love! &#128591;</p>
+    <p style="color:var(--gold);font-weight:800;font-size:19px;margin:10px 0">Looking forward to seeing all of you on December 27th!</p>
+    <div style="background:#1d0833;border:1px solid var(--pink);border-radius:12px;padding:12px;margin:12px 0 0;text-align:left">
+      <b>&#127915; Please don't forget your ticket!</b><br>
+      Your QR ticket was sent to your email. Check your inbox (and spam or Promotions) and bring it on your phone. Can't find it?
+      <button type="button" id="hfResend" class="secondary" style="margin-top:10px">Email my tickets again</button>
+      <span style="color:var(--muted);font-size:13px">Plans changed? Reply to your ticket email so someone on the waitlist gets your seat.</span>
+    </div>
+    <button type="button" class="secondary" id="wlBtn">Join the waitlist</button>
     <p class="fine" id="wlNote" style="margin-top:8px">We'll email you right away if a seat opens up.</p>
   </div>
 
@@ -129,12 +134,13 @@
   // Sold out: a warm thank-you card instead of the form. The waitlist form opens only on request.
   var WL = false;
   function housefull(open) {
-    $('evPrice').textContent = 'HOUSEFULL! Thank you, Danbury \uD83D\uDE4F';
+    $('evPrice').textContent = '\uD83C\uDF89 SHOW HOUSEFULL! Sold out in 2 days. Thank you, Danbury! \uD83D\uDE4F';
     $('tierNow').textContent = '';
     if (WL) return;
     $('formCard').style.display = 'none'; $('fullCard').style.display = 'block';
     $('wlBtn').style.display = $('wlNote').style.display = open ? '' : 'none';
   }
+  $('hfResend').onclick = function () { $('lost').open = true; $('lost').scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(function () { $('lostEmail').focus(); }, 400); };
   $('wlBtn').onclick = function () { WL = true; $('fullCard').style.display = 'none'; $('formCard').style.display = 'block'; $('name').focus(); };
   $('go').textContent = LABEL; showTotal();
   loadSeats();
